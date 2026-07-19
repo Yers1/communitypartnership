@@ -55,6 +55,18 @@
 7. **README.md**: дописать список фич (пп. 1–6) и прод-URL.
 8. **Редеплой**: `npx vercel --prod --yes` (логин уже есть), потом `curl -s -o /dev/null -w "%{http_code}" <прод-URL>` = 200, `node test.mjs` зелёный, commit.
 
+## Этап 3 — killer-фичи (выполнять, если сказано «этап 3»)
+
+Этапы 1–2 сделаны и задеплоены: https://volunteer-hub-kappa.vercel.app — всё работает, test.mjs зелёный. Все фичи этапа 3 — ТОЛЬКО клиентские (app.js + index.html). **БД и schema.sql НЕ трогать** (нет доступа к SQL). Не ломай существующее: после каждой фичи `node --check app.js` + `node test.mjs` (зелёный) + `python3 -m http.server 8555` & curl 200 + git commit. Порядок = приоритет; если времени мало, делай сверху вниз.
+
+1. **CSV-экспорт** (панель координатора, рядом с «Скопировать список»): кнопка «Скачать CSV» → CSV `Имя,Контакт\r\n...` с BOM `\uFEFF` (кириллица в Excel), Blob, `<a download="title.csv">`.click(). i18n: `csv_btn: 'Скачать CSV' / 'CSV жүктеу'`.
+2. **«📅 В календарь»** на карточке события: кнопка → генерирует .ics (BEGIN:VCALENDAR/VEVENT, DTSTART;VALUE=DATE=YYYYMMDD из ev.date, SUMMARY=title, LOCATION=city, DESCRIPTION), Blob text/calendar, download `event-<id>.ics`. i18n: `cal_btn`.
+3. **Сертификат волонтёра**: после успешной записи (и в «Моих записях») кнопка «🏅 Сертификат» → `<canvas>` 900x640: градиентный фон зелёный, рамка, 🌱, «Сертификат», имя крупно, «за участие в», название события, дата, город → `canvas.toDataURL()` → download `certificate.png`. Все строки через T (i18n): `cert_title: 'Сертификат'/'Сертификат'`, `cert_for: 'за участие в'/'қатысқаны үшін'`. Красиво — это для демо-видео.
+4. **«Мои записи» (паспорт волонтёра)**: новая секция перед отзывом (добавь в index.html: `<section id="passport">` с input + кнопкой). Ввод контакта → фильтр `EVENTS` по `signups[].contact` (trim, lowercase) → список событий, где записан + «N событий · ~3N часов» (ponytail: 3ч фикс на событие, точный учёт — если будет поле в БД). Контакт в localStorage 'me', при загрузке подставлять. i18n: `passport_title: 'Мои записи'/'Менің тіркелуім'` и т.д.
+5. **WhatsApp/Telegram-шаринг**: на карточке рядом с «Поделиться» две маленькие кнопки-ссылки: `https://wa.me/?text=<encodeURIComponent(title + ' ' + url)>` и `https://t.me/share/url?url=<url>&text=<title>`, target=_blank.
+6. **Топ волонтёров**: секция внизу (перед footer): агрегация всех signups по name, топ-5, «Имя — N записей». Только если 1–5 готовы и test.mjs зелёный. i18n: `top_title`.
+7. **README.md**: дописать фичи 1–6. **Редеплой** `npx vercel --prod --yes`, curl прод = 200, `node test.mjs` зелёный, commit.
+
 ## Правила
 
 - Минимум кода. Никаких новых зависимостей, абстракций, папок, роутеров.
