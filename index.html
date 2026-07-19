@@ -47,8 +47,20 @@ label { font-size: 0.9em; font-weight: 500; }
 .mt { margin-top: 20px; }
 .hidden { display: none !important; }
 #coordinatorBtn, #dashBtn { margin: 20px auto 0; display: block; }
-.feedback { margin-top: 40px; }
-.msg { padding: 10px; border-radius: 6px; margin: 8px 0; font-size: 0.9em; }
+  .feedback { margin-top: 40px; }
+  .passport { margin-top: 40px; }
+  .top { margin-top: 40px; }
+  .share-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .btn-wa, .btn-tg, .btn-cal, .btn-cert { font-size: 0.8em; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; }
+  .btn-wa { color: #25d366; }
+  .btn-tg { color: #0088cc; }
+  .btn-cal { color: #2d6a4f; }
+  .btn-cert { background: #fff8e1; color: #f9a825; border-color: #f9a825; }
+  .past { opacity: 0.6; }
+  .card { animation: fadeIn 0.3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .btn:focus-visible { outline: 2px solid #74c69d; outline-offset: 2px; }
+  .msg { padding: 10px; border-radius: 6px; margin: 8px 0; font-size: 0.9em; }
 .msg-ok { background: #e8f5e9; color: #2d6a4f; }
 .msg-err { background: #ffebee; color: #c62828; }
 .about { background: #e8f5e9; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9em; }
@@ -108,6 +120,15 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
   <button id="dashBtn" class="btn hidden" onclick="toggleDash()"><span id="lang-dash-btn">Панель координатора</span></button>
   <section id="dashboard" class="hidden mt"></section>
 
+  <section class="passport">
+    <h2 id="lang-passport-title">Мои записи</h2>
+    <form id="passportForm" class="card" onsubmit="lookupPassport(event)">
+      <input id="ppContact" placeholder="Email или телефон" required>
+      <button type="submit" class="btn" id="lang-passport-btn">Мои записи</button>
+    </form>
+    <div id="passportResults"></div>
+  </section>
+
   <section class="feedback">
     <h2 id="lang-fb-title">Оставить отзыв о платформе</h2>
     <form id="feedbackForm" class="card" onsubmit="sendFeedback(event)">
@@ -128,6 +149,10 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
       <div id="fbMsg"></div>
       <button type="submit" class="btn" id="lang-btn-send">Отправить</button>
     </form>
+  </section>
+  <section class="top">
+    <h2 id="lang-top-title">Топ волонтёров</h2>
+    <div id="topResults"></div>
   </section>
 </div>
 
