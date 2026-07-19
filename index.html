@@ -60,61 +60,62 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
 <body>
 <header>
   <h1>🌱 Volunteer Hub</h1>
-  <p>Корпоративное волонтёрство Chevron в Казахстане</p>
+  <p id="lang-tag">Корпоративное волонтёрство Chevron в Казахстане</p>
+  <button id="langToggle" class="btn" style="margin-top:8px;font-size:0.8em;padding:4px 12px" onclick="toggleLang()">ҚАЗ</button>
 </header>
 
 <div class="stats" id="stats"></div>
 
 <div class="container">
   <div class="about">
-    <b>Employee Volunteer Program — NVS &amp; Zhurekten Zhurekke.</b>
-    Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей.
-    Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.
+    <b id="lang-about-title">Employee Volunteer Program — NVS &amp; Zhurekten Zhurekke.</b>
+    <span id="lang-about-text">Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей.
+    Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.</span>
   </div>
 
   <div class="filters" id="filters"></div>
   <section id="events"></section>
 
-  <button id="coordinatorBtn" class="btn btn-outline" onclick="toggleCoordinator()">Я координатор</button>
+  <button id="coordinatorBtn" class="btn btn-outline" onclick="toggleCoordinator()"><span id="lang-coord-btn">Я координатор</span></button>
 
   <div id="coordinatorForm" class="card hidden">
-    <h3>Добавить событие</h3>
+    <h3 id="lang-coord-title">Добавить событие</h3>
     <form id="addEventForm" onsubmit="addEvent(event)">
-      <label>Название</label>
+      <label id="lang-lbl-title">Название</label>
       <input id="evTitle" required>
-      <label>Город</label>
+      <label id="lang-lbl-city">Город</label>
       <input id="evCity" required>
-      <label>Дата</label>
+      <label id="lang-lbl-date">Дата</label>
       <input type="date" id="evDate" required>
-      <label>Категория</label>
+      <label id="lang-lbl-cat">Категория</label>
       <select id="evCategory" required>
         <option value="Экология">Экология</option>
         <option value="Дети">Дети</option>
         <option value="Образование">Образование</option>
         <option value="Здоровье">Здоровье</option>
       </select>
-      <label>Описание</label>
+      <label id="lang-lbl-desc">Описание</label>
       <textarea id="evDesc" required></textarea>
-      <label>Мест</label>
+      <label id="lang-lbl-spots">Мест</label>
       <input type="number" id="evSpots" value="20" min="1" required>
-      <label>Код организатора</label>
+      <label id="lang-lbl-code">Код организатора</label>
       <input type="password" id="evCode" required>
       <div id="evMsg"></div>
-      <button type="submit" class="btn">Добавить событие</button>
+      <button type="submit" class="btn" id="lang-btn-add">Добавить событие</button>
     </form>
   </div>
 
-  <button id="dashBtn" class="btn hidden" onclick="toggleDash()">Панель координатора</button>
+  <button id="dashBtn" class="btn hidden" onclick="toggleDash()"><span id="lang-dash-btn">Панель координатора</span></button>
   <section id="dashboard" class="hidden mt"></section>
 
   <section class="feedback">
-    <h2>Оставить отзыв о платформе</h2>
+    <h2 id="lang-fb-title">Оставить отзыв о платформе</h2>
     <form id="feedbackForm" class="card" onsubmit="sendFeedback(event)">
-      <label>Имя</label>
+      <label id="lang-lbl-name">Имя</label>
       <input id="fbName" required>
-      <label>Роль</label>
+      <label id="lang-lbl-role">Роль</label>
       <input id="fbRole" placeholder="сотрудник, координатор, волонтёр">
-      <label>Оценка</label>
+      <label id="lang-lbl-rating">Оценка</label>
       <select id="fbRating" required>
         <option value="5">5 — отлично</option>
         <option value="4">4 — хорошо</option>
@@ -122,15 +123,15 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
         <option value="2">2 — плохо</option>
         <option value="1">1 — очень плохо</option>
       </select>
-      <label>Комментарий</label>
+      <label id="lang-lbl-text">Комментарий</label>
       <textarea id="fbText" required></textarea>
       <div id="fbMsg"></div>
-      <button type="submit" class="btn">Отправить</button>
+      <button type="submit" class="btn" id="lang-btn-send">Отправить</button>
     </form>
   </section>
 </div>
 
-<footer>Employee Volunteer Program: NVS &amp; Zhurekten Zhurekke &middot; 2026</footer>
+<footer id="lang-footer">Employee Volunteer Program: NVS &amp; Zhurekten Zhurekke &middot; 2026</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
