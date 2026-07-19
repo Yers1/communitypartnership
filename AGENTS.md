@@ -67,6 +67,20 @@
 6. **Топ волонтёров**: секция внизу (перед footer): агрегация всех signups по name, топ-5, «Имя — N записей». Только если 1–5 готовы и test.mjs зелёный. i18n: `top_title`.
 7. **README.md**: дописать фичи 1–6. **Редеплой** `npx vercel --prod --yes`, curl прод = 200, `node test.mjs` зелёный, commit.
 
+## Этап 4 — харденинг и багфиксы (выполнять ПОСЛЕ этапа 3)
+
+Цель: продукт без дыр. После каждого пункта: `node --check app.js` + `node test.mjs` + commit. Если на этап 3 времени ушло много — пропусти этап 3 пп. 4–6, но этап 4 пп. 1–5 ОБЯЗАТЕЛЬНЫ (это живые баги).
+
+1. **Антидубль записи**: в doSignup перед insert проверь `ev.signups` (уже в EVENTS): если contact совпал (trim, lowercase) — покажи msg, НЕ вставляй. i18n `already_signed: 'Вы уже записаны на это событие'/'Сіз бұл іс-шараға тіркелгенсіз'`.
+2. **Отмена записи**: в «Моих записях» у каждого события кнопка «Отменить» → `supabase.from('signups').delete().match({event_id, contact})` → loadEvents. Ошибка = alert «Отмена недоступна», не падать. i18n `cancel_btn: 'Отменить'/'Болдырмау'`. (RLS-политику delete пользователь добавил; если нет — просто alert.)
+3. **Анти-double-click**: во всех async-обработчиках (doSignup, addEvent, sendFeedback) кнопку `disabled=true` до await, включить обратно в finally.
+4. **Прошедшие события**: date < сегодня → карточке класс `.past` (opacity .6), вместо кнопки «Записаться» текст t('past'): 'Событие прошло'/'Іс-шара өтті'. Сортировка: будущие по дате ↑, потом прошедшие ↓.
+5. **Фильтр-XSS**: сейчас город вставляется в inline onclick строкой — сломается на кавычке. Переделай: кнопкам `onclick="setCity(INDEX)"`, setCity(i) берёт из массива городов по индексу. Заодно esc() на fallback категории.
+6. **Сеть**: try/catch вокруг всех supabase-вызовов → catch показывает t('net_err'): 'Нет соединения. Проверьте интернет.'/'Байланыс жоқ. Интернетті тексеріңіз.'
+7. **a11y/полировка**: в setLang — `document.documentElement.lang = lang==='kz'?'kk':'ru'`; CSS: `.card{animation:fadeIn .3s}` + `@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}}`; `.btn:focus-visible{outline:2px solid #74c69d;outline-offset:2px}`; `.past{opacity:.6}`.
+8. **test.mjs усилить**: (а) статическая проверка — все `getElementById('X')` из app.js существуют как `id="X"` в index.html, кроме динамических с префиксами `name- contact- signup- signupMsg- ev-`; (б) DELETE-проверка signups (если 204 — политика delete есть, залогировать OK; если ошибка — просто warning, не падать). Тест должен оставаться зелёным.
+9. **Финал**: README дописать (фичи этапа 3–4), редеплой `npx vercel --prod --yes`, curl прод = 200, `node test.mjs` зелёный, commit, `git log --oneline` показать.
+
 ## Правила
 
 - Минимум кода. Никаких новых зависимостей, абстракций, папок, роутеров.
