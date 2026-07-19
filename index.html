@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volunteer Hub — корпоративное волонтёрство</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #333; line-height: 1.5; }
+header { background: #2d6a4f; color: white; padding: 24px; text-align: center; }
+header h1 { font-size: 1.8em; }
+header p { opacity: 0.85; margin-top: 4px; }
+.container { max-width: 720px; margin: 0 auto; padding: 20px; }
+.card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card h3 { font-size: 1.15em; margin-bottom: 6px; }
+.card .meta { color: #666; font-size: 0.85em; margin-bottom: 8px; }
+.card .meta span { margin-right: 12px; }
+.card .cat { display: inline-block; background: #e8f5e9; color: #2d6a4f; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+.card .desc { margin: 10px 0; font-size: 0.95em; }
+.card .signups { color: #2d6a4f; font-weight: 600; margin: 8px 0; font-size: 0.9em; }
+.card .signup-form { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+.card .signup-form.open { display: block; }
+.btn { background: #2d6a4f; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9em; }
+.btn:hover { background: #1b4332; }
+.btn-small { padding: 5px 12px; font-size: 0.8em; }
+.btn-outline { background: white; color: #2d6a4f; border: 1px solid #2d6a4f; }
+.btn-outline:hover { background: #e8f5e9; }
+input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9em; margin: 4px 0 10px; font-family: inherit; }
+textarea { resize: vertical; min-height: 80px; }
+label { font-size: 0.9em; font-weight: 500; }
+.mt { margin-top: 20px; }
+.hidden { display: none; }
+#coordinatorForm { margin-top: 20px; }
+#coordinatorBtn { display: block; margin: 20px auto; }
+.feedback { margin-top: 40px; }
+.msg { padding: 10px; border-radius: 6px; margin: 8px 0; font-size: 0.9em; }
+.msg-ok { background: #e8f5e9; color: #2d6a4f; }
+.msg-err { background: #ffebee; color: #c62828; }
+footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Volunteer Hub</h1>
+  <p>Корпоративное волонтёрство Chevron в Казахстане</p>
+</header>
+
+<div class="container">
+  <section id="events"></section>
+
+  <button id="coordinatorBtn" class="btn btn-outline" onclick="toggleCoordinator()">Я координатор</button>
+
+  <div id="coordinatorForm" class="card hidden">
+    <h3>Добавить событие</h3>
+    <form id="addEventForm" onsubmit="addEvent(event)">
+      <label>Название</label>
+      <input id="evTitle" required>
+      <label>Город</label>
+      <input id="evCity" required>
+      <label>Дата</label>
+      <input type="date" id="evDate" required>
+      <label>Категория</label>
+      <select id="evCategory" required>
+        <option value="Экология">Экология</option>
+        <option value="Дети">Дети</option>
+        <option value="Образование">Образование</option>
+        <option value="Здоровье">Здоровье</option>
+      </select>
+      <label>Описание</label>
+      <textarea id="evDesc" required></textarea>
+      <label>Мест</label>
+      <input type="number" id="evSpots" value="20" min="1" required>
+      <label>Код организатора</label>
+      <input type="password" id="evCode" required>
+      <div id="evMsg"></div>
+      <button type="submit" class="btn">Добавить событие</button>
+    </form>
+  </div>
+
+  <section class="feedback">
+    <h2>Оставить отзыв о платформе</h2>
+    <form id="feedbackForm" class="card" onsubmit="sendFeedback(event)">
+      <label>Имя</label>
+      <input id="fbName" required>
+      <label>Роль</label>
+      <input id="fbRole" placeholder="сотрудник, координатор, волонтёр">
+      <label>Оценка</label>
+      <select id="fbRating" required>
+        <option value="5">5 — отлично</option>
+        <option value="4">4 — хорошо</option>
+        <option value="3">3 — средне</option>
+        <option value="2">2 — плохо</option>
+        <option value="1">1 — очень плохо</option>
+      </select>
+      <label>Комментарий</label>
+      <textarea id="fbText" required></textarea>
+      <div id="fbMsg"></div>
+      <button type="submit" class="btn">Отправить</button>
+    </form>
+  </section>
+</div>
+
+<footer>Employee Volunteer Program: NVS &amp; Zhurekten Zhurekke &middot; 2026</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
