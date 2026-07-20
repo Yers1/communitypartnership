@@ -41,7 +41,20 @@ for (const id of ids) {
   check(html.includes(`id="${id}"`), `index.html has id="${id}"`);
 }
 
-// 5. DELETE check (optional, warning only)
+// 5. i18n key parity check (extract each T dict block and compare keys)
+const blockStarts = ['ru', 'kz', 'en'].map(lang => app.indexOf(lang + ': {'));
+const blockEnds = blockStarts.slice(1).concat([app.indexOf('};', blockStarts[blockStarts.length - 1])]);
+const blocks = blockStarts.map((start, i) => {
+  if (start === -1) return [];
+  const block = app.slice(start, blockEnds[i]);
+  return [...new Set([...block.matchAll(/\b([a-z_][a-z0-9_]*):\s*['"]/g)].map(m => m[1]))];
+});
+const [ru, kz, en] = blocks;
+for (const k of [...new Set([...ru, ...kz, ...en])]) {
+  check(ru.includes(k) && kz.includes(k) && en.includes(k), `i18n key parity: ${k}`);
+}
+
+// 6. DELETE policy check (optional, warning only)
 const r4 = await fetch(url + '/rest/v1/signups?event_id=eq.0&contact=eq.test@example.com', {
   method: 'DELETE', headers: { ...h, Prefer: 'return=minimal' }
 });
