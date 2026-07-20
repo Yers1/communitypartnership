@@ -3,77 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Volunteer Hub — корпоративное волонтёрство Chevron</title>
-<meta name="description" content="Платформа корпоративного волонтёрства Chevron в Казахстане: субботники, посадка деревьев, поддержка детей. Запишись в 1 клик.">
-<meta property="og:title" content="Volunteer Hub — волонтёрство Chevron в Казахстане">
+<title>Volunteer Hub — корпоративное волонтёрство</title>
+<meta name="description" content="Платформа корпоративного волонтёрства в Казахстане: субботники, посадка деревьев, поддержка детей. Запишись в 1 клик.">
+<meta property="og:title" content="Volunteer Hub — корпоративное волонтёрство">
 <meta property="og:description" content="Субботники, посадка деревьев, поддержка детей — Астана, Алматы, Атырау. Запишись в 1 клик.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<meta name="theme-color" content="#2d6a4f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #333; line-height: 1.5; }
-header { background: linear-gradient(135deg, #2d6a4f, #40916c); color: white; padding: 28px 20px; text-align: center; }
-header h1 { font-size: 1.9em; }
-header p { opacity: 0.9; margin-top: 6px; }
+:root { --brand: #2d6a4f; }
+body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #333; line-height: 1.5; }
+header { background: linear-gradient(135deg, var(--brand), #40916c); color: white; padding: 40px 20px 32px; text-align: center; }
+header h1 { font-size: 2em; display: flex; align-items: center; justify-content: center; gap: 10px; }
+header p { opacity: 0.9; margin-top: 8px; font-size: 1.05em; }
+header .lang-wrap { margin-top: 14px; }
+header .lang-wrap button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
+header .lang-wrap button:hover { background: rgba(255,255,255,0.25); }
 .stats { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; background: white; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .stat { text-align: center; }
-.stat b { display: block; font-size: 1.4em; color: #2d6a4f; }
+.stat b { display: block; font-size: 1.4em; color: var(--brand); }
 .stat span { font-size: 0.8em; color: #777; }
 .container { max-width: 720px; margin: 0 auto; padding: 20px; }
+.about { background: #e8f5e9; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; font-size: 0.95em; }
+.about b { display: block; margin-bottom: 6px; font-size: 1.05em; }
+.how { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.how h2 { font-size: 1.1em; margin-bottom: 10px; }
+.how .steps { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; font-size: 0.9em; }
+.how .steps span { flex: 1; min-width: 140px; text-align: center; padding: 8px; border-radius: 8px; background: #f5f5f5; }
+.impact { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; }
+.impact h2 { font-size: 1.2em; margin-bottom: 14px; color: var(--brand); }
+.impact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+.impact-item { padding: 10px; }
+.impact-item b { display: block; font-size: 1.8em; color: var(--brand); }
+.impact-item span { font-size: 0.8em; color: #777; }
+.search { margin-bottom: 14px; }
+.search input { padding: 10px 14px; border-radius: 24px; border: 1px solid #ccc; font-size: 0.95em; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .filters button { background: white; border: 1px solid #ccc; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85em; }
-.filters button.active { background: #2d6a4f; color: white; border-color: #2d6a4f; }
-.card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.filters button.active { background: var(--brand); color: white; border-color: var(--brand); }
+.card { background: white; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); animation: fadeIn 0.3s; }
 .card.hl { outline: 3px solid #74c69d; }
 .card h3 { font-size: 1.15em; margin-bottom: 6px; }
 .card .meta { color: #666; font-size: 0.85em; margin-bottom: 8px; }
 .card .meta span { margin-right: 12px; }
-.card .cat { display: inline-block; background: #e8f5e9; color: #2d6a4f; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+.card .cat { display: inline-block; background: #e8f5e9; color: var(--brand); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
 .card .desc { margin: 10px 0; font-size: 0.95em; }
-.card .signups { color: #2d6a4f; font-weight: 600; margin: 8px 0; font-size: 0.9em; }
+.card .signups { color: var(--brand); font-weight: 600; margin: 8px 0; font-size: 0.9em; }
 .card .full { color: #c62828; font-weight: 600; }
+.card .few { color: #f57f17; font-weight: 600; font-size: 0.9em; }
+.card .social { color: #555; font-size: 0.85em; margin: 4px 0 8px; }
 .card .signup-form { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
 .card .signup-form.open { display: block; }
-.btn { background: #2d6a4f; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9em; }
+.btn { background: var(--brand); color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9em; min-height: 36px; }
 .btn:hover { background: #1b4332; }
 .btn:disabled { background: #aaa; cursor: not-allowed; }
 .btn-small { padding: 5px 12px; font-size: 0.8em; }
-.btn-outline { background: white; color: #2d6a4f; border: 1px solid #2d6a4f; }
+.btn-outline { background: white; color: var(--brand); border: 1px solid var(--brand); }
 .btn-outline:hover { background: #e8f5e9; }
-.btn-share { background: none; border: 1px solid #ccc; color: #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; margin-left: 8px; }
+.btn-share { background: none; border: 1px solid #ccc; color: #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
+.btn-wa, .btn-tg, .btn-cal, .btn-cert { font-size: 0.8em; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; }
+.btn-wa { color: #25d366; }
+.btn-tg { color: #0088cc; }
+.btn-cal { color: var(--brand); }
+.btn-cert { background: #fff8e1; color: #f57f17; border-color: #f57f17; }
+.share-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 32px 20px; }
+.empty .empty-emoji { font-size: 3em; margin-bottom: 10px; }
+.empty h3 { color: #666; font-size: 1em; }
+.level-card { text-align: center; }
+.level-card .level-emoji { font-size: 2.5em; }
+.level-card h3 { margin-top: 8px; }
+.progress { background: #e0e0e0; border-radius: 8px; height: 10px; margin: 10px 0; overflow: hidden; }
+.progress-fill { background: var(--brand); height: 100%; border-radius: 8px; }
+.bar-bg { background: #e0e0e0; border-radius: 6px; height: 10px; overflow: hidden; margin: 8px 0; }
+.bar-fill { height: 100%; border-radius: 6px; }
+.report { background: #f5f5f5; }
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin: 12px 0; }
+.report-grid div { text-align: center; }
+.report-grid b { display: block; font-size: 1.4em; color: var(--brand); }
+.report-grid span { font-size: 0.75em; color: #666; }
 input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9em; margin: 4px 0 10px; font-family: inherit; }
 textarea { resize: vertical; min-height: 80px; }
 label { font-size: 0.9em; font-weight: 500; }
 .mt { margin-top: 20px; }
 .hidden { display: none !important; }
+#globalError { position: fixed; top: 0; left: 0; right: 0; background: #c62828; color: white; padding: 10px; text-align: center; z-index: 10000; font-size: 0.85em; }
 #coordinatorBtn, #dashBtn { margin: 20px auto 0; display: block; }
-  .feedback { margin-top: 40px; }
-  .passport { margin-top: 40px; }
-  .top { margin-top: 40px; }
-  .share-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-  .btn-wa, .btn-tg, .btn-cal, .btn-cert { font-size: 0.8em; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; }
-  .btn-wa { color: #25d366; }
-  .btn-tg { color: #0088cc; }
-  .btn-cal { color: #2d6a4f; }
-  .btn-cert { background: #fff8e1; color: #f9a825; border-color: #f9a825; }
-  .past { opacity: 0.6; }
-  .card { animation: fadeIn 0.3s; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .btn:focus-visible { outline: 2px solid #74c69d; outline-offset: 2px; }
-  .msg { padding: 10px; border-radius: 6px; margin: 8px 0; font-size: 0.9em; }
-.msg-ok { background: #e8f5e9; color: #2d6a4f; }
-.msg-err { background: #ffebee; color: #c62828; }
-.about { background: #e8f5e9; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9em; }
-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin: 8px 0; }
-td, th { text-align: left; padding: 4px 8px; border-bottom: 1px solid #eee; }
+.feedback { margin-top: 40px; }
+.passport { margin-top: 40px; }
+.top { margin-top: 40px; }
 footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes confettiFall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+.btn:focus-visible { outline: 2px solid #74c69d; outline-offset: 2px; }
+.past { opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+@media print { header, .stats, .about, .how, .impact, .filters, .search, #events, #coordinatorBtn, .feedback, .passport, .top, footer, .share-row button { display: none !important; } #dashboard, #dashBtn { display: block !important; } #dashboard .card { box-shadow: none; border: 1px solid #ccc; } .share-row { display: none !important; } }
+@media (max-width: 480px) {
+  header h1 { font-size: 1.6em; }
+  .stats { gap: 12px; }
+  .impact-grid { grid-template-columns: repeat(2, 1fr); }
+  .how .steps { flex-direction: column; }
+  .share-row { gap: 6px; }
+  .btn, .btn-share, .btn-wa, .btn-tg, .btn-cal { min-height: 44px; padding: 10px 14px; }
+  .meta { font-size: 0.8em; }
+}
 </style>
 </head>
 <body>
+<div id="globalError" class="hidden"></div>
 <header>
-  <h1>🌱 Volunteer Hub</h1>
-  <p id="lang-tag">Корпоративное волонтёрство Chevron в Казахстане</p>
-  <button id="langToggle" class="btn" style="margin-top:8px;font-size:0.8em;padding:4px 12px" onclick="toggleLang()">ҚАЗ</button>
+  <h1><span id="headerEmoji">🌱</span> Volunteer Hub</h1>
+  <p id="lang-tag">Корпоративное волонтёрство в один клик</p>
+  <div class="lang-wrap">
+    <button id="langToggle" class="btn" onclick="toggleLang()">ҚАЗ</button>
+  </div>
 </header>
 
 <div class="stats" id="stats"></div>
@@ -83,6 +129,21 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
     <b id="lang-about-title">Employee Volunteer Program — NVS &amp; Zhurekten Zhurekke.</b>
     <span id="lang-about-text">Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей.
     Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.</span>
+  </div>
+
+  <div class="how">
+    <h2 id="lang-how-title">Как это работает</h2>
+    <div class="steps">
+      <span id="lang-step1">1️⃣ Выберите событие</span>
+      <span id="lang-step2">2️⃣ Запишитесь в 1 клик</span>
+      <span id="lang-step3">3️⃣ Получите сертификат</span>
+    </div>
+  </div>
+
+  <div class="impact" id="impact"></div>
+
+  <div class="search" id="search">
+    <input id="searchInput" placeholder="Поиск по событиям..." oninput="doSearch()">
   </div>
 
   <div class="filters" id="filters"></div>
