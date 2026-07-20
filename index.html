@@ -13,108 +13,190 @@
 <link rel="icon" href="icon.svg">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root { --brand: #2d6a4f; }
-body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #333; line-height: 1.5; }
-header { background: linear-gradient(135deg, var(--brand), #40916c); color: white; padding: 40px 20px 32px; text-align: center; }
-header h1 { font-size: 2em; display: flex; align-items: center; justify-content: center; gap: 10px; }
-header p { opacity: 0.9; margin-top: 8px; font-size: 1.05em; }
-header .lang-wrap { margin-top: 14px; }
-header .lang-wrap button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 16px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
-header .lang-wrap button:hover { background: rgba(255,255,255,0.25); }
-.stats { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; background: white; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.stat { text-align: center; }
-.stat b { display: block; font-size: 1.4em; color: var(--brand); }
-.stat span { font-size: 0.8em; color: #777; }
-.container { max-width: 720px; margin: 0 auto; padding: 20px; }
-.about { background: #e8f5e9; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; font-size: 0.95em; }
-.about b { display: block; margin-bottom: 6px; font-size: 1.05em; }
-.how { background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.how h2 { font-size: 1.1em; margin-bottom: 10px; }
-.how .steps { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; font-size: 0.9em; }
-.how .steps span { flex: 1; min-width: 140px; text-align: center; padding: 8px; border-radius: 8px; background: #f5f5f5; }
-.impact { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); text-align: center; }
-.impact h2 { font-size: 1.2em; margin-bottom: 14px; color: var(--brand); }
-.impact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
-.impact-item { padding: 10px; }
-.impact-item b { display: block; font-size: 1.8em; color: var(--brand); }
-.impact-item span { font-size: 0.8em; color: #777; }
-.search { margin-bottom: 14px; }
-.search input { padding: 10px 14px; border-radius: 24px; border: 1px solid #ccc; font-size: 0.95em; }
-.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.filters button { background: white; border: 1px solid #ccc; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85em; }
-.filters button.active { background: var(--brand); color: white; border-color: var(--brand); }
-.card { background: white; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); animation: fadeIn 0.3s; }
+:root {
+  --brand: #2d6a4f;
+  --brand-2: #40916c;
+  --brand-light: #e8f5e9;
+  --accent: #f9a825;
+  --danger: #c62828;
+  --text: #1a1a1a;
+  --muted: #666;
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --radius: 16px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: white; padding: 64px 20px 48px; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.12) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 40%); pointer-events: none; }
+.hero h1 { font-size: 2.6em; display: flex; align-items: center; justify-content: center; gap: 12px; position: relative; z-index: 1; }
+.hero p { opacity: 0.92; margin-top: 10px; font-size: 1.15em; max-width: 520px; margin-left: auto; margin-right: auto; position: relative; z-index: 1; }
+.hero .lang-wrap { margin-top: 20px; position: relative; z-index: 1; }
+.hero .lang-wrap button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); color: white; padding: 8px 20px; border-radius: 24px; font-size: 0.85em; cursor: pointer; transition: 0.2s; }
+.hero .lang-wrap button:hover { background: rgba(255,255,255,0.25); }
+
+/* Stats */
+.stats-bar { background: var(--card); border-radius: 0 0 var(--radius) var(--radius); box-shadow: var(--shadow); margin: -24px auto 28px; max-width: 720px; padding: 20px; display: flex; justify-content: space-around; gap: 16px; flex-wrap: wrap; position: relative; z-index: 2; }
+.stat-item { text-align: center; min-width: 90px; }
+.stat-item b { display: block; font-size: 1.8em; color: var(--brand); }
+.stat-item span { font-size: 0.8em; color: var(--muted); }
+
+/* Container */
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px 40px; }
+.section { margin-bottom: 40px; }
+.section-title { font-size: 1.4em; margin-bottom: 16px; color: var(--text); }
+
+/* Cards */
+.card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); animation: fadeIn 0.35s; }
 .card.hl { outline: 3px solid #74c69d; }
-.card h3 { font-size: 1.15em; margin-bottom: 6px; }
-.card .meta { color: #666; font-size: 0.85em; margin-bottom: 8px; }
-.card .meta span { margin-right: 12px; }
-.card .cat { display: inline-block; background: #e8f5e9; color: var(--brand); padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-.card .desc { margin: 10px 0; font-size: 0.95em; }
-.card .signups { color: var(--brand); font-weight: 600; margin: 8px 0; font-size: 0.9em; }
-.card .full { color: #c62828; font-weight: 600; }
-.card .few { color: #f57f17; font-weight: 600; font-size: 0.9em; }
-.card .social { color: #555; font-size: 0.85em; margin: 4px 0 8px; }
-.card .signup-form { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
-.card .signup-form.open { display: block; }
-.btn { background: var(--brand); color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.9em; min-height: 36px; }
+
+/* About */
+.about { background: var(--brand-light); border-radius: var(--radius); padding: 22px 24px; }
+.about b { display: block; margin-bottom: 6px; font-size: 1.1em; color: var(--brand); }
+
+/* How */
+.how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.how-card { background: var(--card); border-radius: var(--radius); padding: 18px; text-align: center; box-shadow: var(--shadow); font-size: 0.9em; }
+.how-card .num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--brand); color: white; border-radius: 50%; font-weight: bold; margin-bottom: 8px; }
+
+/* Impact */
+.impact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; }
+.impact-card { background: var(--brand-light); border-radius: var(--radius); padding: 18px; }
+.impact-card b { display: block; font-size: 2em; color: var(--brand); }
+.impact-card span { font-size: 0.8em; color: var(--muted); }
+
+/* Controls */
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+.search input { width: 100%; max-width: 320px; padding: 12px 18px; border-radius: 28px; border: 1px solid #ddd; font-size: 0.95em; background: white; }
+.filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filter-group label { font-size: 0.85em; color: var(--muted); }
+.filter-group select { padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; background: white; font-size: 0.85em; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { background: white; border: 1px solid #ddd; padding: 7px 14px; border-radius: 20px; cursor: pointer; font-size: 0.85em; transition: 0.15s; }
+.chip:hover { border-color: var(--brand); }
+.chip.active { background: var(--brand); color: white; border-color: var(--brand); }
+
+/* Events grid */
+.events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.event-card { background: var(--card); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; transition: transform 0.15s, box-shadow 0.15s; }
+.event-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); }
+.event-card.past { opacity: 0.65; }
+.event-card h3 { font-size: 1.15em; margin-bottom: 8px; }
+.event-card .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font-size: 0.85em; color: var(--muted); }
+.event-card .meta span { background: #f0f0f0; padding: 3px 8px; border-radius: 6px; }
+.event-card .cat { background: var(--brand-light); color: var(--brand); }
+.event-card .desc { font-size: 0.92em; color: var(--muted); margin-bottom: 12px; flex-grow: 1; }
+.event-card .signups { font-size: 0.9em; font-weight: 600; color: var(--brand); margin-bottom: 4px; }
+.event-card .full { color: var(--danger); }
+.event-card .few { color: #f57f17; font-size: 0.85em; }
+.event-card .social { font-size: 0.85em; color: #555; margin-bottom: 8px; }
+.event-card .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.signup-form { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
+.signup-form.open { display: block; }
+.signup-form input { margin-bottom: 8px; }
+
+/* Buttons */
+.btn { background: var(--brand); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9em; min-height: 44px; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .btn:hover { background: #1b4332; }
 .btn:disabled { background: #aaa; cursor: not-allowed; }
-.btn-small { padding: 5px 12px; font-size: 0.8em; }
+.btn-small { padding: 7px 12px; font-size: 0.8em; }
 .btn-outline { background: white; color: var(--brand); border: 1px solid var(--brand); }
-.btn-outline:hover { background: #e8f5e9; }
-.btn-share { background: none; border: 1px solid #ccc; color: #555; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
-.btn-wa, .btn-tg, .btn-cal, .btn-cert { font-size: 0.8em; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: white; cursor: pointer; }
-.btn-wa { color: #25d366; }
-.btn-tg { color: #0088cc; }
-.btn-cal { color: var(--brand); }
-.btn-cert { background: #fff8e1; color: #f57f17; border-color: #f57f17; }
-.share-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.empty { text-align: center; padding: 32px 20px; }
-.empty .empty-emoji { font-size: 3em; margin-bottom: 10px; }
-.empty h3 { color: #666; font-size: 1em; }
+.btn-outline:hover { background: var(--brand-light); }
+.btn-ghost { background: #f0f0f0; color: var(--text); border: none; }
+.btn-ghost:hover { background: #e0e0e0; }
+.btn-wa { color: #25d366; background: #f0fff4; border: 1px solid #c8f6d8; }
+.btn-tg { color: #0088cc; background: #f0f9ff; border: 1px solid #cce5f3; }
+.btn-cal { color: var(--brand); background: #f0f7f4; border: 1px solid #d0e7dd; }
+.btn-cert { background: #fff8e1; color: #f57f17; border: 1px solid #f57f17; }
+.btn-danger { color: var(--danger); background: #ffebee; border: 1px solid #ef9a9a; }
+
+/* Leaderboard */
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 16px; margin-bottom: 20px; }
+.podium-item { background: var(--card); border-radius: var(--radius); padding: 18px; text-align: center; box-shadow: var(--shadow); min-width: 100px; }
+.podium-item.first { order: 2; padding-top: 10px; border-top: 6px solid gold; }
+.podium-item.second { order: 1; border-top: 6px solid silver; }
+.podium-item.third { order: 3; border-top: 6px solid #cd7f32; }
+.podium-item .emoji { font-size: 2.2em; }
+.podium-item .name { font-weight: 700; margin-top: 4px; }
+.podium-item .count { font-size: 0.85em; color: var(--muted); }
+.leader-list { background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.leader-list ol { list-style: none; }
+.leader-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+.leader-list li:last-child { border-bottom: none; }
+
+/* Coordinator */
+.auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.auth-tabs button { flex: 1; background: #f0f0f0; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.9em; }
+.auth-tabs button.active { background: var(--brand); color: white; }
+.auth-form { display: none; }
+.auth-form.active { display: block; }
+.auth-note { font-size: 0.85em; color: var(--muted); margin-top: 12px; }
+
+/* Dashboard */
+.dash-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.report-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
+.report-grid div { text-align: center; background: var(--brand-light); padding: 12px; border-radius: 12px; }
+.report-grid b { display: block; font-size: 1.4em; color: var(--brand); }
+.report-grid span { font-size: 0.75em; color: var(--muted); }
+.dash-event { margin-bottom: 16px; }
+.dash-event table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+.dash-event th, .dash-event td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+.dash-event th { color: var(--muted); font-weight: 500; }
+.bar-bg { background: #e0e0e0; border-radius: 6px; height: 10px; overflow: hidden; margin: 8px 0; }
+.bar-fill { height: 100%; border-radius: 6px; }
+
+/* Passport */
 .level-card { text-align: center; }
-.level-card .level-emoji { font-size: 2.5em; }
+.level-card .emoji { font-size: 3em; }
 .level-card h3 { margin-top: 8px; }
 .progress { background: #e0e0e0; border-radius: 8px; height: 10px; margin: 10px 0; overflow: hidden; }
 .progress-fill { background: var(--brand); height: 100%; border-radius: 8px; }
-.bar-bg { background: #e0e0e0; border-radius: 6px; height: 10px; overflow: hidden; margin: 8px 0; }
-.bar-fill { height: 100%; border-radius: 6px; }
-.report { background: #f5f5f5; }
-.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin: 12px 0; }
-.report-grid div { text-align: center; }
-.report-grid b { display: block; font-size: 1.4em; color: var(--brand); }
-.report-grid span { font-size: 0.75em; color: #666; }
-input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9em; margin: 4px 0 10px; font-family: inherit; }
+
+/* Empty */
+.empty { text-align: center; padding: 40px 20px; }
+.empty .emoji { font-size: 3.5em; margin-bottom: 12px; }
+.empty h3 { color: var(--muted); font-size: 1.05em; }
+
+/* Form */
+input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em; margin: 4px 0 12px; font-family: inherit; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand); }
 textarea { resize: vertical; min-height: 80px; }
-label { font-size: 0.9em; font-weight: 500; }
-.mt { margin-top: 20px; }
+label { font-size: 0.9em; font-weight: 500; color: var(--muted); }
+.mt { margin-top: 24px; }
 .hidden { display: none !important; }
-#globalError { position: fixed; top: 0; left: 0; right: 0; background: #c62828; color: white; padding: 10px; text-align: center; z-index: 10000; font-size: 0.85em; }
-#coordinatorBtn, #dashBtn { margin: 20px auto 0; display: block; }
-.feedback { margin-top: 40px; }
-.passport { margin-top: 40px; }
-.top { margin-top: 40px; }
-footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Messages */
+.msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9em; margin: 8px 0; }
+.msg-ok { background: var(--brand-light); color: var(--brand); }
+.msg-err { background: #ffebee; color: var(--danger); }
+
+#globalError { position: fixed; top: 0; left: 0; right: 0; background: var(--danger); color: white; padding: 12px; text-align: center; z-index: 10000; font-size: 0.9em; }
+
+footer { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 0.85em; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes confettiFall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
 .btn:focus-visible { outline: 2px solid #74c69d; outline-offset: 2px; }
-.past { opacity: 0.6; }
-@media (prefers-reduced-motion: reduce) { .card { animation: none; } }
-@media print { header, .stats, .about, .how, .impact, .filters, .search, #events, #coordinatorBtn, .feedback, .passport, .top, footer, .share-row button { display: none !important; } #dashboard, #dashBtn { display: block !important; } #dashboard .card { box-shadow: none; border: 1px solid #ccc; } .share-row { display: none !important; } }
-@media (max-width: 480px) {
-  header h1 { font-size: 1.6em; }
-  .stats { gap: 12px; }
-  .impact-grid { grid-template-columns: repeat(2, 1fr); }
-  .how .steps { flex-direction: column; }
-  .share-row { gap: 6px; }
-  .btn, .btn-share, .btn-wa, .btn-tg, .btn-cal { min-height: 44px; padding: 10px 14px; }
-  .meta { font-size: 0.8em; }
+
+@media print { header, .stats-bar, .about, .how, .impact, .controls, .events-grid, #coordinatorBtn, .feedback, .passport, .top, footer, .share-row button { display: none !important; } #dashboard, #dashBtn { display: block !important; } #dashboard .card { box-shadow: none; border: 1px solid #ccc; } .share-row { display: none !important; } }
+@media (max-width: 640px) {
+  .hero h1 { font-size: 2em; }
+  .how-grid, .impact-grid { grid-template-columns: 1fr; }
+  .events-grid { grid-template-columns: 1fr; }
+  .report-grid { grid-template-columns: repeat(2, 1fr); }
+  .podium { flex-direction: column; align-items: center; }
+  .podium-item { width: 100%; max-width: 220px; }
+  .podium-item.first { order: 1; }
 }
 </style>
 </head>
 <body>
 <div id="globalError" class="hidden"></div>
-<header>
+
+<header class="hero">
   <h1><span id="headerEmoji">🌱</span> Volunteer Hub</h1>
   <p id="lang-tag">Корпоративное волонтёрство в один клик</p>
   <div class="lang-wrap">
@@ -122,76 +204,134 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
   </div>
 </header>
 
-<div class="stats" id="stats"></div>
+<div class="stats-bar" id="stats"></div>
 
 <div class="container">
-  <div class="about">
+  <section class="section about">
     <b id="lang-about-title">Employee Volunteer Program — NVS &amp; Zhurekten Zhurekke.</b>
-    <span id="lang-about-text">Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей.
-    Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.</span>
-  </div>
+    <span id="lang-about-text">Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей. Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.</span>
+  </section>
 
-  <div class="how">
-    <h2 id="lang-how-title">Как это работает</h2>
-    <div class="steps">
-      <span id="lang-step1">1️⃣ Выберите событие</span>
-      <span id="lang-step2">2️⃣ Запишитесь в 1 клик</span>
-      <span id="lang-step3">3️⃣ Получите сертификат</span>
+  <section class="section">
+    <h2 class="section-title" id="lang-how-title">Как это работает</h2>
+    <div class="how-grid">
+      <div class="how-card"><span class="num">1</span><div id="lang-step1">Выберите событие</div></div>
+      <div class="how-card"><span class="num">2</span><div id="lang-step2">Запишитесь в 1 клик</div></div>
+      <div class="how-card"><span class="num">3</span><div id="lang-step3">Получите сертификат</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title" id="lang-impact-title">Наш вклад</h2>
+    <div class="impact-grid" id="impact"></div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title" id="lang-events-title">События</h2>
+    <div class="controls">
+      <div class="search"><input id="searchInput" placeholder="Поиск по событиям..." oninput="doSearch()"></div>
+      <div class="filter-group">
+        <label id="lang-sort-label">Сортировка:</label>
+        <select id="sortSelect" onchange="doSort()">
+          <option value="date">По дате</option>
+          <option value="popular">По популярности</option>
+          <option value="spots">По местам</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label id="lang-date-label">Дата:</label>
+        <select id="dateFilter" onchange="doDateFilter()">
+          <option value="all">Все</option>
+          <option value="future">Будущие</option>
+          <option value="past">Прошедшие</option>
+          <option value="week">На этой неделе</option>
+          <option value="month">В этом месяце</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips" id="categoryChips"></div>
+    <div class="chips" id="filters" style="margin-top:12px"></div>
+    <div id="events" class="events-grid" style="margin-top:18px"></div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title" id="lang-coord-title">Координатор</h2>
+    <div id="coordinatorForm" class="card">
+      <div class="auth-tabs">
+        <button id="tabLogin" class="active" onclick="showAuthTab('login')">Вход</button>
+        <button id="tabRegister" onclick="showAuthTab('register')">Регистрация</button>
+      </div>
+      <form id="loginForm" class="auth-form active" onsubmit="loginCoord(event)">
+        <label id="lang-lbl-email">Email</label>
+        <input id="coordEmail" type="email" required>
+        <label id="lang-lbl-password">Пароль</label>
+        <input id="coordPassword" type="password" required>
+        <div id="loginMsg"></div>
+        <button type="submit" class="btn" id="lang-btn-login">Войти</button>
+      </form>
+      <form id="registerForm" class="auth-form" onsubmit="registerCoord(event)">
+        <label id="lang-lbl-reg-email">Email</label>
+        <input id="coordRegEmail" type="email" required>
+        <label id="lang-lbl-reg-password">Пароль</label>
+        <input id="coordRegPassword" type="password" minlength="6" required>
+        <label id="lang-lbl-reg-password2">Повторите пароль</label>
+        <input id="coordRegPassword2" type="password" minlength="6" required>
+        <div id="registerMsg"></div>
+        <button type="submit" class="btn" id="lang-btn-register">Зарегистрироваться</button>
+        <p class="auth-note" id="lang-reg-note">После регистрации администратор подтвердит вашу заявку.</p>
+      </form>
+    </div>
+  </section>
+
+  <div id="addEventSection" class="section hidden">
+    <div class="card">
+      <div class="dash-header">
+        <h2 class="section-title" id="lang-add-title">Добавить событие</h2>
+        <button class="btn btn-outline btn-small" onclick="toggleAddEvent()">✕</button>
+      </div>
+      <form id="addEventForm" onsubmit="addEvent(event)">
+        <label id="lang-lbl-title">Название</label>
+        <input id="evTitle" required>
+        <label id="lang-lbl-city">Город</label>
+        <input id="evCity" required>
+        <label id="lang-lbl-date">Дата</label>
+        <input type="date" id="evDate" required>
+        <label id="lang-lbl-cat">Категория</label>
+        <select id="evCategory" required>
+          <option value="Экология">Экология</option>
+          <option value="Дети">Дети</option>
+          <option value="Образование">Образование</option>
+          <option value="Здоровье">Здоровье</option>
+        </select>
+        <label id="lang-lbl-desc">Описание</label>
+        <textarea id="evDesc" required></textarea>
+        <label id="lang-lbl-spots">Мест</label>
+        <input type="number" id="evSpots" value="20" min="1" required>
+        <div id="evMsg"></div>
+        <button type="submit" class="btn" id="lang-btn-add">Добавить событие</button>
+      </form>
     </div>
   </div>
 
-  <div class="impact" id="impact"></div>
-
-  <div class="search" id="search">
-    <input id="searchInput" placeholder="Поиск по событиям..." oninput="doSearch()">
-  </div>
-
-  <div class="filters" id="filters"></div>
-  <section id="events"></section>
-
-  <button id="coordinatorBtn" class="btn btn-outline" onclick="toggleCoordinator()"><span id="lang-coord-btn">Я координатор</span></button>
-
-  <div id="coordinatorForm" class="card hidden">
-    <h3 id="lang-coord-title">Добавить событие</h3>
-    <form id="addEventForm" onsubmit="addEvent(event)">
-      <label id="lang-lbl-title">Название</label>
-      <input id="evTitle" required>
-      <label id="lang-lbl-city">Город</label>
-      <input id="evCity" required>
-      <label id="lang-lbl-date">Дата</label>
-      <input type="date" id="evDate" required>
-      <label id="lang-lbl-cat">Категория</label>
-      <select id="evCategory" required>
-        <option value="Экология">Экология</option>
-        <option value="Дети">Дети</option>
-        <option value="Образование">Образование</option>
-        <option value="Здоровье">Здоровье</option>
-      </select>
-      <label id="lang-lbl-desc">Описание</label>
-      <textarea id="evDesc" required></textarea>
-      <label id="lang-lbl-spots">Мест</label>
-      <input type="number" id="evSpots" value="20" min="1" required>
-      <label id="lang-lbl-code">Код организатора</label>
-      <input type="password" id="evCode" required>
-      <div id="evMsg"></div>
-      <button type="submit" class="btn" id="lang-btn-add">Добавить событие</button>
-    </form>
-  </div>
-
-  <button id="dashBtn" class="btn hidden" onclick="toggleDash()"><span id="lang-dash-btn">Панель координатора</span></button>
+  <button id="dashBtn" class="btn hidden" onclick="toggleDash()" style="margin-bottom:20px"><span id="lang-dash-btn">Панель координатора</span></button>
   <section id="dashboard" class="hidden mt"></section>
 
-  <section class="passport">
-    <h2 id="lang-passport-title">Мои записи</h2>
+  <section class="section passport">
+    <h2 class="section-title" id="lang-passport-title">Мои записи</h2>
     <form id="passportForm" class="card" onsubmit="lookupPassport(event)">
       <input id="ppContact" placeholder="Email или телефон" required>
       <button type="submit" class="btn" id="lang-passport-btn">Мои записи</button>
     </form>
-    <div id="passportResults"></div>
+    <div id="passportResults" style="margin-top:16px"></div>
   </section>
 
-  <section class="feedback">
-    <h2 id="lang-fb-title">Оставить отзыв о платформе</h2>
+  <section class="section top">
+    <h2 class="section-title" id="lang-top-title">Топ волонтёров</h2>
+    <div id="topResults"></div>
+  </section>
+
+  <section class="section feedback">
+    <h2 class="section-title" id="lang-fb-title">Оставить отзыв о платформе</h2>
     <form id="feedbackForm" class="card" onsubmit="sendFeedback(event)">
       <label id="lang-lbl-name">Имя</label>
       <input id="fbName" required>
@@ -210,10 +350,6 @@ footer { text-align: center; padding: 24px; color: #999; font-size: 0.8em; }
       <div id="fbMsg"></div>
       <button type="submit" class="btn" id="lang-btn-send">Отправить</button>
     </form>
-  </section>
-  <section class="top">
-    <h2 id="lang-top-title">Топ волонтёров</h2>
-    <div id="topResults"></div>
   </section>
 </div>
 

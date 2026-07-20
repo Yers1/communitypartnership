@@ -36,6 +36,20 @@ create policy "read signups" on signups for select to anon using (true);
 create policy "join" on signups for insert to anon with check (true);
 create policy "send feedback" on feedback for insert to anon with check (true);
 
+-- Регистрация координаторов: админ одобряет в Supabase dashboard (approved = true)
+create table if not exists coordinator_requests (
+  id bigint generated always as identity primary key,
+  email text not null unique,
+  approved boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table coordinator_requests enable row level security;
+
+create policy "read coordinator_requests" on coordinator_requests for select to anon, authenticated using (true);
+create policy "insert coordinator_requests" on coordinator_requests for insert to anon, authenticated with check (true);
+create policy "update coordinator_requests" on coordinator_requests for update to anon, authenticated using (true) with check (true);
+
 insert into events (title, city, date, category, description, spots) values
 ('Субботник на набережной', 'Атырау', '2026-07-25', 'Экология', 'Уборка мусора на набережной Урала. Перчатки и пакеты выдаём на месте.', 30),
 ('Посадка деревьев в парке', 'Алматы', '2026-08-01', 'Экология', 'Сажаем 100 саженцев вместе с NVS. Инструмент предоставляется.', 25),

@@ -1,12 +1,17 @@
 var supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-var ORG_CODE = 'zhurek2026';
 var COMPANY = window.COMPANY || { name: 'Chevron', program: 'Employee Volunteer Program — NVS \u0026 Zhurekten Zhurekke', emoji: '\ud83c\udf31', color: '#2d6a4f' };
 
 var EVENTS = [];
 var CITY = 'all';
 var CITIES = ['all'];
+var CATEGORY = 'all';
+var CATEGORIES = ['all'];
+var DATE_FILTER = 'all';
+var SORT = 'date';
 var SEARCH = '';
-var isCoord = sessionStorage.getItem('coord') === '1';
+var user = null;
+var coordEmail = sessionStorage.getItem('coordEmail') || '';
+var isCoord = false;
 var canEdit = true;
 var editingId = null;
 var lang = localStorage.getItem('lang') || 'ru';
@@ -15,17 +20,31 @@ var today = new Date().toISOString().slice(0, 10);
 var T = {
   ru: {
     tagline: 'Корпоративное волонтёрство в один клик',
-    about_title: '', // заполняется из COMPANY.program
+    about_title: '',
     about_text: 'Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей. Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.',
-    coordinator_btn: 'Я координатор',
-    coord_title: 'Добавить событие',
+    events_title: 'События',
+    how_title: 'Как это работает',
+    step1: 'Выберите событие',
+    step2: 'Запишитесь в 1 клик',
+    step3: 'Получите сертификат',
+    coordinator_title: 'Координатор',
+    login_tab: 'Вход',
+    register_tab: 'Регистрация',
+    email_lbl: 'Email',
+    password_lbl: 'Пароль',
+    reg_email_lbl: 'Email',
+    reg_password_lbl: 'Пароль',
+    reg_password2_lbl: 'Повторите пароль',
+    btn_login: 'Войти',
+    btn_register: 'Зарегистрироваться',
+    reg_note: 'После регистрации администратор подтвердит вашу заявку.',
+    add_title: 'Добавить событие',
     title_lbl: 'Название',
     city_lbl: 'Город',
     date_lbl: 'Дата',
     category_lbl: 'Категория',
     desc_lbl: 'Описание',
     spots_lbl: 'Мест',
-    code_lbl: 'Код организатора',
     add_btn: 'Добавить событие',
     save_btn: 'Сохранить изменения',
     dash_btn: 'Панель координатора',
@@ -53,14 +72,22 @@ var T = {
     feedback_ok: 'Спасибо за отзыв!',
     event_added: 'Событие добавлено!',
     event_saved: 'Событие сохранено!',
-    wrong_code: 'Неверный код организатора',
     load_err: 'Ошибка загрузки',
-    no_events: 'Нет событий. Координатор ещё ничего не добавил.',
     empty_events: 'Пока нет событий — загляните позже',
     empty_passport: 'Вы пока не записаны ни на одно событие',
     empty_top: 'Пока нет записей',
     empty_search: 'Ничего не найдено',
     search_ph: 'Поиск по событиям...',
+    sort_label: 'Сортировка:',
+    date_label: 'Дата:',
+    sort_date: 'По дате',
+    sort_popular: 'По популярности',
+    sort_spots: 'По местам',
+    date_all: 'Все',
+    date_future: 'Будущие',
+    date_past: 'Прошедшие',
+    date_week: 'На этой неделе',
+    date_month: 'В этом месяце',
     events_count: 'событий',
     volunteers: 'волонтёров записалось',
     spots_free: 'мест свободно',
@@ -98,10 +125,6 @@ var T = {
     level_2: 'Активист',
     level_3: 'Лидер',
     next_level: 'До следующего уровня: N событий',
-    step1: '1️⃣ Выберите событие',
-    step2: '2️⃣ Запишитесь в 1 клик',
-    step3: '3️⃣ Получите сертификат',
-    how_title: 'Как это работает',
     report_title: 'Отчёт координатора',
     copy_report: 'Скопировать отчёт',
     fill_rate: 'Заполняемость',
@@ -112,22 +135,44 @@ var T = {
     confirm_del: 'Удалить событие? Это нельзя отменить',
     copy_contacts: 'Скопировать все контакты',
     print_btn: 'Печать',
+    pending_approval: 'Заявка на рассмотрении. Ожидайте подтверждения администратора.',
+    no_approved: 'Вы не одобрены как координатор.',
+    invalid_auth: 'Неверный email или пароль.',
+    register_ok: 'Заявка отправлена. Администратор подтвердит доступ.',
+    email_exists: 'Этот email уже зарегистрирован.',
+    password_match: 'Пароли не совпадают.',
     cat_Экология: 'Экология', cat_Дети: 'Дети', cat_Образование: 'Образование', cat_Здоровье: 'Здоровье',
-    rating_5: '5 — отлично', rating_4: '4 — хорошо', rating_3: '3 — средне', rating_2: '2 — плохо', rating_1: '1 — очень плохо'
+    rating_5: '5 — отлично', rating_4: '4 — хорошо', rating_3: '3 — средне', rating_2: '2 — плохо', rating_1: '1 — очень плохо',
+    sort_options: 'По дате,По популярности,По местам',
+    date_options: 'Все,Будущие,Прошедшие,На этой неделе,В этом месяце'
   },
   kz: {
     tagline: 'Бір басумен корпоративтік волонтерлік',
     about_title: '',
     about_text: 'Сенбіліктер, ағаш отырғызу, мүгедек және аз қамтылған балаларға қолдау. Қалалар: Астана, Алматы, Атырау. Іс-шараны таңдап, 1 басумен тіркеліңіз.',
-    coordinator_btn: 'Мен координатормын',
-    coord_title: 'Іс-шара қосу',
+    events_title: 'Іс-шаралар',
+    how_title: 'Бұл қалай жұмыс істейді',
+    step1: 'Іс-шараны таңдаңыз',
+    step2: 'Бір басумен тіркеліңіз',
+    step3: 'Сертификат алыңыз',
+    coordinator_title: 'Координатор',
+    login_tab: 'Кіру',
+    register_tab: 'Тіркелу',
+    email_lbl: 'Email',
+    password_lbl: 'Құпия сөз',
+    reg_email_lbl: 'Email',
+    reg_password_lbl: 'Құпия сөз',
+    reg_password2_lbl: 'Құпия сөзді қайталаңыз',
+    btn_login: 'Кіру',
+    btn_register: 'Тіркелу',
+    reg_note: 'Тіркелгеннен кейін әкімшілер сіздің өтініміңізді растайды.',
+    add_title: 'Іс-шара қосу',
     title_lbl: 'Атауы',
     city_lbl: 'Қала',
     date_lbl: 'Күні',
     category_lbl: 'Санаты',
     desc_lbl: 'Сипаттамасы',
     spots_lbl: 'Орын',
-    code_lbl: 'Ұйымдастырушы коды',
     add_btn: 'Іс-шара қосу',
     save_btn: 'Өзгерістерді сақтау',
     dash_btn: 'Координатор панелі',
@@ -155,14 +200,22 @@ var T = {
     feedback_ok: 'Пікіріңізге рахмет!',
     event_added: 'Іс-шара қосылды!',
     event_saved: 'Іс-шара сақталды!',
-    wrong_code: 'Ұйымдастырушы коды қате',
     load_err: 'Жүктеу қатесі',
-    no_events: 'Іс-шара әзірге жоқ',
     empty_events: 'Әзірге іс-шара жоқ — кейінірек кіріңіз',
     empty_passport: 'Сіз әзірге ешқандай іс-шараға тіркелмегенсіз',
     empty_top: 'Әзірге тіркелімдер жоқ',
     empty_search: 'Ештеңе табылмады',
     search_ph: 'Іс-шаралар бойынша іздеу...',
+    sort_label: 'Сұрыптау:',
+    date_label: 'Күні:',
+    sort_date: 'Күні бойынша',
+    sort_popular: 'Танымалдығы бойынша',
+    sort_spots: 'Орындар бойынша',
+    date_all: 'Барлығы',
+    date_future: 'Алдағы',
+    date_past: 'Өткен',
+    date_week: 'Осы аптада',
+    date_month: 'Осы айда',
     events_count: 'іс-шара',
     volunteers: 'волонтер тіркелді',
     spots_free: 'бос орын',
@@ -200,10 +253,6 @@ var T = {
     level_2: 'Белсенді',
     level_3: 'Көшбасшы',
     next_level: 'Келесі деңгейге: N іс-шара',
-    step1: '1️⃣ Іс-шараны таңдаңыз',
-    step2: '2️⃣ Бір басумен тіркеліңіз',
-    step3: '3️⃣ Сертификат алыңыз',
-    how_title: 'Бұл қалай жұмыс істейді',
     report_title: 'Координатор есебі',
     copy_report: 'Есептің көшірмесі',
     fill_rate: 'Толықтыру',
@@ -214,22 +263,44 @@ var T = {
     confirm_del: 'Іс-шараны жою керек пе? Бұны кері қайтару мүмкін емес',
     copy_contacts: 'Барлық байланыстарды көшіру',
     print_btn: 'Баспа',
+    pending_approval: 'Өтінім қаралуда. Әкімшінің растауын күтіңіз.',
+    no_approved: 'Сіз координатор ретінде расталмағансыз.',
+    invalid_auth: 'Email немесе құпия сөз қате.',
+    register_ok: 'Өтінім жіберілді. Әкімшілер қатынамды растайды.',
+    email_exists: 'Бұл email тіркелген.',
+    password_match: 'Құпия сөздер сәйкес келмейді.',
     cat_Экология: 'Экология', cat_Дети: 'Балалар', cat_Образование: 'Білім', cat_Здоровье: 'Денсаулық',
-    rating_5: '5 — өте жақсы', rating_4: '4 — жақсы', rating_3: '3 — орташа', rating_2: '2 — нашар', rating_1: '1 — өте нашар'
+    rating_5: '5 — өте жақсы', rating_4: '4 — жақсы', rating_3: '3 — орташа', rating_2: '2 — нашар', rating_1: '1 — өте нашар',
+    sort_options: 'Күні бойынша,Танымалдығы бойынша,Орындар бойынша',
+    date_options: 'Барлығы,Алдағы,Өткен,Осы аптада,Осы айда'
   },
   en: {
     tagline: 'Corporate volunteering in one click',
     about_title: '',
     about_text: 'Clean-ups, tree planting, support for children with disabilities and from low-income families. Cities: Astana, Almaty, Atyrau. Choose an event and sign up in 1 click.',
-    coordinator_btn: 'I am a coordinator',
-    coord_title: 'Add event',
+    events_title: 'Events',
+    how_title: 'How it works',
+    step1: 'Choose an event',
+    step2: 'Sign up in 1 click',
+    step3: 'Get your certificate',
+    coordinator_title: 'Coordinator',
+    login_tab: 'Log in',
+    register_tab: 'Register',
+    email_lbl: 'Email',
+    password_lbl: 'Password',
+    reg_email_lbl: 'Email',
+    reg_password_lbl: 'Password',
+    reg_password2_lbl: 'Repeat password',
+    btn_login: 'Log in',
+    btn_register: 'Register',
+    reg_note: 'After registration, an administrator will approve your request.',
+    add_title: 'Add event',
     title_lbl: 'Title',
     city_lbl: 'City',
     date_lbl: 'Date',
     category_lbl: 'Category',
     desc_lbl: 'Description',
     spots_lbl: 'Spots',
-    code_lbl: 'Organizer code',
     add_btn: 'Add event',
     save_btn: 'Save changes',
     dash_btn: 'Coordinator dashboard',
@@ -257,14 +328,22 @@ var T = {
     feedback_ok: 'Thank you for your feedback!',
     event_added: 'Event added!',
     event_saved: 'Event saved!',
-    wrong_code: 'Invalid organizer code',
     load_err: 'Loading error',
-    no_events: 'No events yet. The coordinator has not added anything.',
     empty_events: 'No events yet — check back later',
     empty_passport: 'You have not signed up for any events yet',
     empty_top: 'No signups yet',
     empty_search: 'Nothing found',
     search_ph: 'Search events...',
+    sort_label: 'Sort:',
+    date_label: 'Date:',
+    sort_date: 'By date',
+    sort_popular: 'By popularity',
+    sort_spots: 'By spots',
+    date_all: 'All',
+    date_future: 'Upcoming',
+    date_past: 'Past',
+    date_week: 'This week',
+    date_month: 'This month',
     events_count: 'events',
     volunteers: 'volunteers signed up',
     spots_free: 'spots available',
@@ -302,10 +381,6 @@ var T = {
     level_2: 'Activist',
     level_3: 'Leader',
     next_level: 'N more events to next level',
-    step1: '1️⃣ Choose an event',
-    step2: '2️⃣ Sign up in 1 click',
-    step3: '3️⃣ Get your certificate',
-    how_title: 'How it works',
     report_title: 'Coordinator report',
     copy_report: 'Copy report',
     fill_rate: 'Fill rate',
@@ -316,8 +391,16 @@ var T = {
     confirm_del: 'Delete this event? This cannot be undone',
     copy_contacts: 'Copy all contacts',
     print_btn: 'Print',
+    pending_approval: 'Your request is pending administrator approval.',
+    no_approved: 'You are not approved as a coordinator.',
+    invalid_auth: 'Invalid email or password.',
+    register_ok: 'Request submitted. An administrator will approve access.',
+    email_exists: 'This email is already registered.',
+    password_match: 'Passwords do not match.',
     cat_Экология: 'Ecology', cat_Дети: 'Children', cat_Образование: 'Education', cat_Здоровье: 'Health',
-    rating_5: '5 — excellent', rating_4: '4 — good', rating_3: '3 — average', rating_2: '2 — bad', rating_1: '1 — very bad'
+    rating_5: '5 — excellent', rating_4: '4 — good', rating_3: '3 — average', rating_2: '2 — bad', rating_1: '1 — very bad',
+    sort_options: 'By date,By popularity,By spots',
+    date_options: 'All,Upcoming,Past,This week,This month'
   }
 };
 
@@ -326,7 +409,6 @@ function esc(s) { var d = document.createElement('div'); d.textContent = s; retu
 function escAttr(s) { return esc(s).replace(/"/g, '\u0026quot;').replace(/'/g, '\u0026#39;'); }
 function fmtDate(d) { return new Date(d).toLocaleDateString(lang === 'kz' ? 'kk-KZ' : lang === 'en' ? 'en-GB' : 'ru-RU', {day:'numeric', month:'long', year:'numeric'}); }
 function showMsg(id, text, isErr) { var el = document.getElementById(id); if (el) el.innerHTML = '<div class="msg ' + (isErr ? 'msg-err' : 'msg-ok') + '">' + text + '</div>'; }
-function evMsg(text, isErr) { showMsg('evMsg', text, isErr); }
 function netMsg(id) { showMsg(id, t('net_err'), true); }
 function setElementDisabled(el, disabled) { if (el) el.disabled = disabled; }
 
@@ -344,15 +426,20 @@ function setLang(l) {
 function setLangStatic() {
   var map = {
     'lang-tag': 'tagline', 'lang-about-title': 'about_title', 'lang-about-text': 'about_text',
-    'lang-coord-btn': 'coordinator_btn', 'lang-coord-title': 'coord_title',
-    'lang-lbl-title': 'title_lbl', 'lang-lbl-city': 'city_lbl', 'lang-lbl-date': 'date_lbl',
-    'lang-lbl-cat': 'category_lbl', 'lang-lbl-desc': 'desc_lbl', 'lang-lbl-spots': 'spots_lbl',
-    'lang-lbl-code': 'code_lbl', 'lang-btn-add': 'add_btn', 'lang-dash-btn': 'dash_btn',
+    'lang-events-title': 'events_title', 'lang-how-title': 'how_title', 'lang-step1': 'step1',
+    'lang-step2': 'step2', 'lang-step3': 'step3', 'lang-coord-title': 'coordinator_title',
+    'tabLogin': 'login_tab', 'tabRegister': 'register_tab', 'lang-lbl-email': 'email_lbl',
+    'lang-lbl-password': 'password_lbl', 'lang-lbl-reg-email': 'reg_email_lbl',
+    'lang-lbl-reg-password': 'reg_password_lbl', 'lang-lbl-reg-password2': 'reg_password2_lbl',
+    'lang-btn-login': 'btn_login', 'lang-btn-register': 'btn_register', 'lang-reg-note': 'reg_note',
+    'lang-add-title': 'add_title', 'lang-lbl-title': 'title_lbl', 'lang-lbl-city': 'city_lbl',
+    'lang-lbl-date': 'date_lbl', 'lang-lbl-cat': 'category_lbl', 'lang-lbl-desc': 'desc_lbl',
+    'lang-lbl-spots': 'spots_lbl', 'lang-btn-add': 'add_btn', 'lang-dash-btn': 'dash_btn',
     'lang-fb-title': 'feedback_title', 'lang-lbl-name': 'name_lbl', 'lang-lbl-role': 'role_lbl',
     'lang-lbl-rating': 'rating_lbl', 'lang-lbl-text': 'text_lbl', 'lang-btn-send': 'send_btn',
     'lang-footer': 'footer', 'lang-passport-title': 'passport_title', 'lang-passport-btn': 'passport_btn',
-    'lang-top-title': 'top_title', 'lang-how-title': 'how_title', 'lang-step1': 'step1',
-    'lang-step2': 'step2', 'lang-step3': 'step3'
+    'lang-top-title': 'top_title', 'lang-impact-title': 'impact_title', 'lang-sort-label': 'sort_label',
+    'lang-date-label': 'date_label'
   };
   document.getElementById('lang-about-title').textContent = COMPANY.program;
   for (var id in map) { var el = document.getElementById(id); if (el && map[id]) el.textContent = T[lang][map[id]]; }
@@ -361,6 +448,13 @@ function setLangStatic() {
   document.getElementById('searchInput').placeholder = T[lang].search_ph;
   document.querySelectorAll('#evCategory option').forEach(function(o) { o.textContent = T[lang]['cat_' + o.value] || o.value; });
   document.querySelectorAll('#fbRating option').forEach(function(o) { o.textContent = T[lang]['rating_' + o.value] || o.value; });
+  // sort/date options
+  var sortOpts = document.getElementById('sortSelect');
+  var sorts = t('sort_options').split(',');
+  ['sort_date', 'sort_popular', 'sort_spots'].forEach(function(k, i) { if (sortOpts.options[i]) sortOpts.options[i].textContent = sorts[i] || t(k); });
+  var dateOpts = document.getElementById('dateFilter');
+  var dates = t('date_options').split(',');
+  ['date_all', 'date_future', 'date_past', 'date_week', 'date_month'].forEach(function(k, i) { if (dateOpts.options[i]) dateOpts.options[i].textContent = dates[i] || t(k); });
 }
 
 function categoryIcon(cat) {
@@ -373,9 +467,9 @@ function renderStats() {
   var signed = EVENTS.reduce(function(s, e) { return s + e.signups.length; }, 0);
   var free = EVENTS.reduce(function(s, e) { return s + Math.max(0, (e.spots || 0) - e.signups.length); }, 0);
   document.getElementById('stats').innerHTML =
-    '<div class="stat"><b>' + total + '</b><span>' + t('events_count') + '</span></div>' +
-    '<div class="stat"><b>' + signed + '</b><span>' + t('volunteers') + '</span></div>' +
-    '<div class="stat"><b>' + free + '</b><span>' + t('spots_free') + '</span></div>';
+    '<div class="stat-item"><b>' + total + '</b><span>' + t('events_count') + '</span></div>' +
+    '<div class="stat-item"><b>' + signed + '</b><span>' + t('volunteers') + '</span></div>' +
+    '<div class="stat-item"><b>' + free + '</b><span>' + t('spots_free') + '</span></div>';
 }
 
 function renderImpact() {
@@ -384,39 +478,64 @@ function renderImpact() {
   var events = EVENTS.length;
   var cities = Object.keys(EVENTS.reduce(function(acc, e) { acc[e.city] = 1; return acc; }, {})).length;
   document.getElementById('impact').innerHTML =
-    '<h2>' + t('impact_title') + '</h2><div class="impact-grid">' +
-    '<div class="impact-item"><b>' + hours + '</b><span>' + t('impact_hours') + '</span></div>' +
-    '<div class="impact-item"><b>' + people + '</b><span>' + t('impact_people') + '</span></div>' +
-    '<div class="impact-item"><b>' + events + '</b><span>' + t('impact_events') + '</span></div>' +
-    '<div class="impact-item"><b>' + cities + '</b><span>' + t('impact_cities') + '</span></div>' +
-    '</div>';
+    '<div class="impact-card"><b>' + hours + '</b><span>' + t('impact_hours') + '</span></div>' +
+    '<div class="impact-card"><b>' + people + '</b><span>' + t('impact_people') + '</span></div>' +
+    '<div class="impact-card"><b>' + events + '</b><span>' + t('impact_events') + '</span></div>' +
+    '<div class="impact-card"><b>' + cities + '</b><span>' + t('impact_cities') + '</span></div>';
 }
 
 function setCity(i) { CITY = CITIES[i]; render(); }
+function setCategory(i) { CATEGORY = CATEGORIES[i]; render(); }
+function setDateFilter() { DATE_FILTER = document.getElementById('dateFilter').value; render(); }
+function doSort() { SORT = document.getElementById('sortSelect').value; render(); }
+
 function renderFilters() {
   CITIES = ['all'];
-  EVENTS.forEach(function(e) { if (CITIES.indexOf(e.city) === -1) CITIES.push(e.city); });
-  var html = CITIES.map(function(c, i) {
-    return '<button class="' + (CITY === c ? 'active' : '') + '" onclick="setCity(' + i + ')">' + (c === 'all' ? t('all') : esc(c)) + '</button>';
+  CATEGORIES = ['all'];
+  EVENTS.forEach(function(e) { if (CITIES.indexOf(e.city) === -1) CITIES.push(e.city); if (CATEGORIES.indexOf(e.category) === -1) CATEGORIES.push(e.category); });
+  var cityHtml = CITIES.map(function(c, i) {
+    return '<button class="chip ' + (CITY === c ? 'active' : '') + '" onclick="setCity(' + i + ')">' + (c === 'all' ? t('all') : esc(c)) + '</button>';
   }).join('');
-  document.getElementById('filters').innerHTML = html;
+  document.getElementById('filters').innerHTML = cityHtml;
+  var catHtml = CATEGORIES.map(function(c, i) {
+    return '<button class="chip ' + (CATEGORY === c ? 'active' : '') + '" onclick="setCategory(' + i + ')">' + (c === 'all' ? t('all') : categoryIcon(c) + ' ' + esc(T[lang]['cat_' + c] || c)) + '</button>';
+  }).join('');
+  document.getElementById('categoryChips').innerHTML = catHtml;
+}
+
+function inDateFilter(d) {
+  if (DATE_FILTER === 'all') return true;
+  if (DATE_FILTER === 'future') return d >= today;
+  if (DATE_FILTER === 'past') return d < today;
+  var ev = new Date(d), now = new Date();
+  if (DATE_FILTER === 'week') {
+    var start = new Date(now); start.setDate(now.getDate() - now.getDay());
+    var end = new Date(start); end.setDate(start.getDate() + 7);
+    return ev >= start && ev < end;
+  }
+  if (DATE_FILTER === 'month') return ev.getFullYear() === now.getFullYear() && ev.getMonth() === now.getMonth();
+  return true;
 }
 
 function renderEvents() {
   var sorted = EVENTS.slice().sort(function(a, b) {
     var fa = a.date < today, fb = b.date < today;
+    if (SORT === 'popular') return b.signups.length - a.signups.length;
+    if (SORT === 'spots') return (b.spots - b.signups.length) - (a.spots - a.signups.length);
     if (fa !== fb) return fa ? 1 : -1;
     return fa ? (b.date > a.date ? 1 : -1) : (a.date > b.date ? 1 : -1);
   });
   var filtered = sorted.filter(function(e) {
     var cityOk = CITY === 'all' || e.city === CITY;
+    var catOk = CATEGORY === 'all' || e.category === CATEGORY;
+    var dateOk = inDateFilter(e.date);
     var q = SEARCH.trim().toLowerCase();
     var searchOk = !q || (e.title + ' ' + e.description + ' ' + e.city).toLowerCase().indexOf(q) !== -1;
-    return cityOk && searchOk;
+    return cityOk && catOk && dateOk && searchOk;
   });
   var html;
   if (!filtered.length) {
-    html = '<div class="card empty"><div class="empty-emoji">' + COMPANY.emoji + '</div><h3>' + (SEARCH ? t('empty_search') : t('empty_events')) + '</h3></div>';
+    html = '<div class="card empty"><div class="emoji">' + COMPANY.emoji + '</div><h3>' + (SEARCH ? t('empty_search') : t('empty_events')) + '</h3></div>';
   } else {
     html = filtered.map(function(e) {
       var signed = e.signups.length;
@@ -426,7 +545,7 @@ function renderEvents() {
       var few = !full && !past && left / e.spots <= 0.2;
       var names = e.signups.slice(0, 3).map(function(s) { return esc(s.name); }).join(', ');
       var social = signed > 0 ? '<p class="social">' + names + (signed > 3 ? ' +' + (signed - 3) + ' ' + t('more') : '') + '</p>' : '';
-      return '<div class="card' + (past ? ' past' : '') + '" id="ev-' + e.id + '">' +
+      return '<div class="event-card' + (past ? ' past' : '') + '" id="ev-' + e.id + '">' +
         '<h3>' + esc(e.title) + '</h3>' +
         '<div class="meta"><span>' + esc(e.city) + '</span><span>' + fmtDate(e.date) + '</span>' +
         '<span class="cat">' + categoryIcon(e.category) + ' ' + esc(T[lang]['cat_' + e.category] || e.category) + '</span><span>' + t('spots') + ': ' + e.spots + '</span></div>' +
@@ -436,12 +555,12 @@ function renderEvents() {
         (full && !past ? '<p class="full">' + t('no_spots') + '</p>' : '') +
         (few ? '<p class="few">' + t('few_left') + '</p>' : '') +
         social +
-        '<div class="share-row">' +
-          '<button class="btn" ' + (full || past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')"' + (full || past ? '' : ' aria-label="' + t('signup') + '"') + '>' + (past ? t('past') : t('signup')) + '</button>' +
-          '<button class="btn-share" onclick="shareEvent(' + e.id + ')" aria-label="' + t('share') + '">\ud83d\udd17 ' + t('share') + '</button>' +
-          '<button class="btn-wa" onclick="shareWA(' + e.id + ')" aria-label="WhatsApp">' + t('wa_btn') + '</button>' +
-          '<button class="btn-tg" onclick="shareTG(' + e.id + ')" aria-label="Telegram">' + t('tg_btn') + '</button>' +
-          '<button class="btn-cal" onclick="downloadICS(' + e.id + ')" aria-label="' + t('cal_btn') + '">\ud83d\udcc5 ' + t('cal_btn') + '</button>' +
+        '<div class="actions">' +
+          '<button class="btn" ' + (full || past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')">' + (past ? t('past') : t('signup')) + '</button>' +
+          '<button class="btn-ghost btn-small" onclick="shareEvent(' + e.id + ')">\ud83d\udd17 ' + t('share') + '</button>' +
+          '<button class="btn-wa btn-small" onclick="shareWA(' + e.id + ')">' + t('wa_btn') + '</button>' +
+          '<button class="btn-tg btn-small" onclick="shareTG(' + e.id + ')">' + t('tg_btn') + '</button>' +
+          '<button class="btn-cal btn-small" onclick="downloadICS(' + e.id + ')">\ud83d\udcc5 ' + t('cal_btn') + '</button>' +
         '</div>' +
         '<div class="signup-form" id="signup-' + e.id + '">' +
           '<input placeholder="' + escAttr(t('your_name')) + '" id="name-' + e.id + '" aria-label="' + t('your_name') + '">' +
@@ -464,23 +583,24 @@ function renderDash() {
   var allContacts = [];
   EVENTS.forEach(function(e) { e.signups.forEach(function(s) { if (allContacts.indexOf(s.contact) === -1) allContacts.push(s.contact); }); });
 
-  var html = '<div class="card report"><h2>' + t('report_title') + '</h2>' +
+  var html = '<div class="card report"><div class="dash-header"><h2 class="section-title">' + t('report_title') + '</h2>' +
+    '<button class="btn btn-outline btn-small" onclick="logoutCoord()">' + t('logout') + '</button></div>' +
     '<div class="report-grid">' +
     '<div><b>' + EVENTS.length + '</b><span>' + t('events_count') + '</span></div>' +
     '<div><b>' + totalSigned + '</b><span>' + t('volunteers') + '</span></div>' +
     '<div><b>' + (totalSigned * 3) + '</b><span>' + t('passport_hours') + '</span></div>' +
     '<div><b>' + avgFill + '%</b><span>' + t('fill_rate') + '</span></div>' +
     '</div>' +
-    '<div class="share-row"><button class="btn" onclick="copyReport()">' + t('copy_report') + '</button>' +
-    '<button class="btn" onclick="copyAllContacts()">' + t('copy_contacts') + '</button>' +
+    '<div class="actions"><button class="btn" onclick="copyReport()">' + t('copy_report') + '</button>' +
+    '<button class="btn btn-outline" onclick="copyAllContacts()">' + t('copy_contacts') + '</button>' +
     '<button class="btn btn-outline" onclick="window.print()">' + t('print_btn') + '</button></div></div>';
 
   EVENTS.forEach(function(e) {
     var fill = (e.spots || 1) ? Math.round(e.signups.length / (e.spots || 1) * 100) : 0;
     var color = fill < 50 ? '#c62828' : fill < 80 ? '#f9a825' : '#2d6a4f';
     html += '<div class="card dash-event"><h3>' + esc(e.title) + '</h3>' +
-      '<p class="meta">' + esc(e.city) + ' · ' + fmtDate(e.date) + '</p>' +
-      '<p>' + t('participants') + ': ' + e.signups.length + ' / ' + e.spots + ' · ' + t('fill_rate') + ': ' + fill + '%</p>' +
+      '<p class="meta">' + esc(e.city) + ' \u00b7 ' + fmtDate(e.date) + '</p>' +
+      '<p>' + t('participants') + ': ' + e.signups.length + ' / ' + e.spots + ' \u00b7 ' + t('fill_rate') + ': ' + fill + '%</p>' +
       '<div class="bar-bg"><div class="bar-fill" style="width:' + fill + '%;background:' + color + '"></div></div>';
     if (e.signups.length) {
       html += '<table><tr><th>' + t('name_hdr') + '</th><th>' + t('contact_hdr') + '</th></tr>' +
@@ -489,41 +609,43 @@ function renderDash() {
       html += '<p style="color:#999;font-size:0.85em">' + t('empty_top') + '</p>';
     }
     if (canEdit) {
-      html += '<div class="share-row">' +
+      html += '<div class="actions">' +
         '<button class="btn btn-small" onclick="copyList(' + e.id + ')">' + t('copy_list') + '</button>' +
         '<button class="btn btn-small" onclick="downloadCSV(' + e.id + ')">' + t('csv_btn') + '</button>' +
         '<button class="btn btn-small btn-outline" onclick="duplicateEvent(' + e.id + ')">' + t('dup_btn') + '</button>' +
         '<button class="btn btn-small btn-outline" onclick="startEdit(' + e.id + ')">' + t('edit_btn') + '</button>' +
-        '<button class="btn btn-small btn-outline" style="color:#c62828" onclick="deleteEvent(' + e.id + ')">\ud83d\uddd1</button>' +
+        '<button class="btn btn-small btn-danger" onclick="deleteEvent(' + e.id + ')">\ud83d\uddd1</button>' +
         '</div>';
     }
     html += '</div>';
   });
-  html += '<button class="btn btn-outline" style="margin-top:12px" onclick="logoutCoord()">' + t('logout') + '</button>';
   document.getElementById('dashboard').innerHTML = html;
 }
 
-function renderPassport() { /* generated on lookup */ }
+function renderPassport() { /* on lookup */ }
 function renderTop() {
   var map = {};
   EVENTS.forEach(function(e) { e.signups.forEach(function(s) { var n = s.name.trim(); map[n] = (map[n] || 0) + 1; }); });
-  var sorted = Object.keys(map).map(function(n) { return [n, map[n]]; }).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 5);
-  var html;
+  var sorted = Object.keys(map).map(function(n) { return [n, map[n]]; }).sort(function(a, b) { return b[1] - a[1]; });
+  var html = '';
   if (!sorted.length) {
-    html = '<div class="card empty"><div class="empty-emoji">' + COMPANY.emoji + '</div><h3>' + t('empty_top') + '</h3></div>';
+    html = '<div class="card empty"><div class="emoji">' + COMPANY.emoji + '</div><h3>' + t('empty_top') + '</h3></div>';
   } else {
-    html = '<div class="card"><ol>' + sorted.map(function(x) { return '<li><b>' + esc(x[0]) + '</b> — ' + x[1] + ' ' + t('events_count') + '</li>'; }).join('') + '</ol></div>';
+    var top = sorted.slice(0, 3);
+    var rest = sorted.slice(3);
+    html += '<div class="podium">';
+    if (top[1]) html += '<div class="podium-item second"><div class="emoji">\ud83e\udd48</div><div class="name">' + esc(top[1][0]) + '</div><div class="count">' + top[1][1] + ' ' + t('events_count') + '</div></div>';
+    if (top[0]) html += '<div class="podium-item first"><div class="emoji">\ud83e\udd47</div><div class="name">' + esc(top[0][0]) + '</div><div class="count">' + top[0][1] + ' ' + t('events_count') + '</div></div>';
+    if (top[2]) html += '<div class="podium-item third"><div class="emoji">\ud83e\udd49</div><div class="name">' + esc(top[2][0]) + '</div><div class="count">' + top[2][1] + ' ' + t('events_count') + '</div></div>';
+    html += '</div>';
+    if (rest.length) {
+      html += '<div class="leader-list"><ol>' + rest.map(function(x) { return '<li><span>' + esc(x[0]) + '</span><b>' + x[1] + ' ' + t('events_count') + '</b></li>'; }).join('') + '</ol></div>';
+    }
   }
   document.getElementById('topResults').innerHTML = html;
 }
 
-function renderHow() {
-  document.getElementById('lang-step1').textContent = t('step1');
-  document.getElementById('lang-step2').textContent = t('step2');
-  document.getElementById('lang-step3').textContent = t('step3');
-}
-
-function render() { renderStats(); renderImpact(); renderFilters(); renderEvents(); renderDash(); renderTop(); renderHow(); }
+function render() { renderStats(); renderImpact(); renderFilters(); renderEvents(); renderDash(); renderTop(); }
 
 function toggleSignup(id) { document.getElementById('signup-' + id).classList.toggle('open'); }
 
@@ -550,7 +672,82 @@ async function doSignup(id) {
   finally { setElementDisabled(btn, false); }
 }
 
-function toggleCoordinator() { document.getElementById('coordinatorForm').classList.toggle('hidden'); }
+function showAuthTab(tab) {
+  document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+  document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+}
+
+async function checkApproved(email) {
+  try {
+    var resp = await supabase.from('coordinator_requests').select('approved').eq('email', email).maybeSingle();
+    if (resp.error) { return false; }
+    return resp.data && resp.data.approved;
+  } catch (err) { return false; }
+}
+
+async function loginCoord(e) {
+  e.preventDefault();
+  var form = e.target;
+  var btn = form.querySelector('button[type="submit"]');
+  setElementDisabled(btn, true);
+  try {
+    var email = document.getElementById('coordEmail').value.trim();
+    var password = document.getElementById('coordPassword').value;
+    var resp = await supabase.auth.signInWithPassword({ email: email, password: password });
+    if (resp.error) { showMsg('loginMsg', t('invalid_auth'), true); return; }
+    var approved = await checkApproved(email);
+    if (!approved) { showMsg('loginMsg', t('no_approved'), true); await supabase.auth.signOut(); return; }
+    user = resp.data.user;
+    coordEmail = email;
+    sessionStorage.setItem('coordEmail', email);
+    isCoord = true;
+    showMsg('loginMsg', '', false);
+    document.getElementById('coordinatorForm').classList.add('hidden');
+    document.getElementById('addEventSection').classList.remove('hidden');
+    render();
+  } catch (err) { netMsg('loginMsg'); }
+  finally { setElementDisabled(btn, false); }
+}
+
+async function registerCoord(e) {
+  e.preventDefault();
+  var form = e.target;
+  var btn = form.querySelector('button[type="submit"]');
+  setElementDisabled(btn, true);
+  try {
+    var email = document.getElementById('coordRegEmail').value.trim();
+    var password = document.getElementById('coordRegPassword').value;
+    var password2 = document.getElementById('coordRegPassword2').value;
+    if (password !== password2) { showMsg('registerMsg', t('password_match'), true); return; }
+    var resp = await supabase.auth.signUp({ email: email, password: password });
+    if (resp.error) {
+      if (resp.error.message && resp.error.message.toLowerCase().indexOf('already') !== -1) showMsg('registerMsg', t('email_exists'), true);
+      else showMsg('registerMsg', resp.error.message, true);
+      return;
+    }
+    // insert request
+    var req = await supabase.from('coordinator_requests').insert({ email: email, approved: false });
+    if (req.error) { showMsg('registerMsg', req.error.message, true); return; }
+    showMsg('registerMsg', t('register_ok'), false);
+    form.reset();
+  } catch (err) { netMsg('registerMsg'); }
+  finally { setElementDisabled(btn, false); }
+}
+
+async function logoutCoord() {
+  try { await supabase.auth.signOut(); } catch (err) {}
+  user = null;
+  coordEmail = '';
+  sessionStorage.removeItem('coordEmail');
+  isCoord = false;
+  document.getElementById('addEventSection').classList.add('hidden');
+  document.getElementById('coordinatorForm').classList.remove('hidden');
+  render();
+}
+
+function toggleAddEvent() { document.getElementById('addEventSection').classList.toggle('hidden'); }
 
 function startEdit(id) {
   var ev = EVENTS.find(function(e) { return e.id === id; });
@@ -562,26 +759,25 @@ function startEdit(id) {
   document.getElementById('evCategory').value = ev.category;
   document.getElementById('evDesc').value = ev.description;
   document.getElementById('evSpots').value = ev.spots;
-  document.getElementById('lang-coord-title').textContent = t('edit_btn');
+  document.getElementById('lang-add-title').textContent = t('edit_btn');
   document.getElementById('lang-btn-add').textContent = t('save_btn');
-  document.getElementById('coordinatorForm').classList.remove('hidden');
-  document.getElementById('coordinatorForm').scrollIntoView({behavior:'smooth'});
+  document.getElementById('addEventSection').classList.remove('hidden');
+  document.getElementById('addEventSection').scrollIntoView({behavior:'smooth'});
 }
 function clearEdit() {
   editingId = null;
   document.getElementById('addEventForm').reset();
-  document.getElementById('lang-coord-title').textContent = t('coord_title');
+  document.getElementById('lang-add-title').textContent = t('add_title');
   document.getElementById('lang-btn-add').textContent = t('add_btn');
 }
 
 async function addEvent(e) {
   e.preventDefault();
+  if (!isCoord) { showMsg('evMsg', t('no_approved'), true); return; }
   var form = e.target;
   var btn = form.querySelector('button[type="submit"]');
   setElementDisabled(btn, true);
   try {
-    var code = document.getElementById('evCode').value.trim();
-    if (code !== ORG_CODE) { evMsg(t('wrong_code'), true); return; }
     var ev = {
       title: document.getElementById('evTitle').value.trim(),
       city: document.getElementById('evCity').value.trim(),
@@ -593,17 +789,15 @@ async function addEvent(e) {
     var resp;
     if (editingId) {
       resp = await supabase.from('events').update(ev).eq('id', editingId);
-      if (resp.error) { canEdit = false; evMsg(t('edit_unavail') + ': ' + resp.error.message, true); return; }
-      evMsg(t('event_saved'), false);
+      if (resp.error) { canEdit = false; showMsg('evMsg', t('edit_unavail') + ': ' + resp.error.message, true); return; }
+      showMsg('evMsg', t('event_saved'), false);
     } else {
       resp = await supabase.from('events').insert(ev);
-      if (resp.error) { evMsg(resp.error.message, true); return; }
-      isCoord = true;
-      sessionStorage.setItem('coord', '1');
-      evMsg(t('event_added'), false);
+      if (resp.error) { showMsg('evMsg', resp.error.message, true); return; }
+      showMsg('evMsg', t('event_added'), false);
     }
     clearEdit();
-    document.getElementById('coordinatorForm').classList.add('hidden');
+    document.getElementById('addEventSection').classList.add('hidden');
     loadEvents();
   } catch (err) { netMsg('evMsg'); }
   finally { setElementDisabled(btn, false); }
@@ -662,19 +856,19 @@ async function lookupPassport(e) {
     var mine = EVENTS.filter(function(e) { return e.signups.some(function(s) { return s.contact.toLowerCase().trim() === contact; }); });
     var html = '';
     if (!mine.length) {
-      html = '<div class="card empty"><div class="empty-emoji">' + COMPANY.emoji + '</div><h3>' + t('empty_passport') + '</h3></div>';
+      html = '<div class="card empty"><div class="emoji">' + COMPANY.emoji + '</div><h3>' + t('empty_passport') + '</h3></div>';
     } else {
       var hours = mine.length * 3;
-      var level = hours < 9 ? 1 : hours < 15 ? 2 : 3;
+      var level = mine.length < 3 ? 1 : mine.length < 5 ? 2 : 3;
       var levelKey = level === 1 ? 'level_1' : level === 2 ? 'level_2' : 'level_3';
       var levelEmoji = level === 1 ? '\ud83c\udf31' : level === 2 ? '\ud83c\udf3f' : '\ud83c\udf33';
       var next = level === 1 ? 3 - mine.length : level === 2 ? 5 - mine.length : 0;
-      html += '<div class="card level-card"><div class="level-emoji">' + levelEmoji + '</div><h3>' + levelEmoji + ' ' + t(levelKey) + '</h3><p><b>' + mine.length + '</b> ' + t('events_count') + ' · <b>' + hours + '</b> ' + t('passport_hours') + '</p>';
+      html += '<div class="card level-card"><div class="emoji">' + levelEmoji + '</div><h3>' + levelEmoji + ' ' + t(levelKey) + '</h3><p><b>' + mine.length + '</b> ' + t('events_count') + ' \u00b7 <b>' + hours + '</b> ' + t('passport_hours') + '</p>';
       if (next > 0) html += '<div class="progress"><div class="progress-fill" style="width:' + (mine.length/(mine.length+next)*100) + '%"></div></div><p class="next">' + t('next_level').replace('N', next) + '</p>';
       html += '</div>';
       html += mine.map(function(e) {
-        return '<div class="card"><h3>' + esc(e.title) + '</h3><p class="meta">' + esc(e.city) + ' · ' + fmtDate(e.date) + '</p>' +
-          '<div class="share-row">' +
+        return '<div class="card"><h3>' + esc(e.title) + '</h3><p class="meta">' + esc(e.city) + ' \u00b7 ' + fmtDate(e.date) + '</p>' +
+          '<div class="actions">' +
             '<button class="btn btn-cert" data-id="' + e.id + '" data-name="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="genCert(this.dataset.id, this.dataset.name)">\ud83c\udfc5 ' + t('cert_btn') + '</button>' +
             '<button class="btn btn-outline" data-id="' + e.id + '" data-contact="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="cancelSignup(this.dataset.id, this.dataset.contact)">' + t('cancel_btn') + '</button>' +
           '</div></div>';
@@ -768,16 +962,11 @@ function genCert(id, name) {
   grd.addColorStop(1, '#b7e4c7');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, 900, 640);
-  // watermark
-  ctx.font = '120px system-ui';
-  ctx.globalAlpha = 0.08;
-  ctx.fillStyle = COMPANY.color;
+  ctx.font = '120px system-ui'; ctx.globalAlpha = 0.08; ctx.fillStyle = COMPANY.color;
   for (var i = 0; i < 5; i++) { ctx.fillText(COMPANY.emoji, 80 + i * 180, 200 + i * 120); }
   ctx.globalAlpha = 1;
-  // borders
   ctx.lineWidth = 12; ctx.strokeStyle = COMPANY.color; ctx.strokeRect(24, 24, 852, 592);
   ctx.lineWidth = 4; ctx.strokeStyle = '#74c69d'; ctx.strokeRect(36, 36, 828, 568);
-  // title
   ctx.font = '60px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = COMPANY.color; ctx.fillText(COMPANY.emoji, 450, 110);
   ctx.font = 'bold 48px system-ui'; ctx.fillText(t('cert_title'), 450, 170);
   ctx.font = '22px system-ui'; ctx.fillText(t('cert_name'), 450, 230);
@@ -802,7 +991,6 @@ function confetti() {
 }
 
 function toggleDash() { document.getElementById('dashboard').classList.toggle('hidden'); }
-function logoutCoord() { sessionStorage.removeItem('coord'); isCoord = false; render(); }
 
 function doSearch() {
   SEARCH = document.getElementById('searchInput').value;
@@ -824,6 +1012,24 @@ async function loadEvents() {
   } catch (err) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + t('net_err') + '</p></div>'; }
 }
 
+async function initAuth() {
+  try {
+    var resp = await supabase.auth.getSession();
+    if (resp.data && resp.data.session) {
+      user = resp.data.session.user;
+      var email = user.email;
+      var approved = await checkApproved(email);
+      if (approved) {
+        coordEmail = email;
+        sessionStorage.setItem('coordEmail', email);
+        isCoord = true;
+      } else {
+        await supabase.auth.signOut();
+      }
+    }
+  } catch (err) {}
+}
+
 function init() {
   document.documentElement.lang = lang === 'kz' ? 'kk' : lang === 'en' ? 'en' : 'ru';
   document.documentElement.style.setProperty('--brand', COMPANY.color);
@@ -831,8 +1037,14 @@ function init() {
   var me = localStorage.getItem('me');
   if (me) { document.getElementById('ppContact').value = me; }
   setLangStatic();
-  loadEvents();
-  if (me) setTimeout(function() { lookupPassport(null); }, 600);
+  initAuth().then(function() {
+    loadEvents();
+    if (isCoord) {
+      document.getElementById('coordinatorForm').classList.add('hidden');
+      document.getElementById('addEventSection').classList.remove('hidden');
+    }
+  });
+  if (me) setTimeout(function() { lookupPassport(null); }, 800);
   window.addEventListener('error', function(e) {
     var el = document.getElementById('globalError');
     if (el) { el.textContent = t('net_err'); el.classList.remove('hidden'); }
