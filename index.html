@@ -257,7 +257,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
   <nav class="topbar" aria-label="Основная навигация">
     <a class="wordmark" href="#events" aria-label="Volunteer Hub — к событиям"><span class="wordmark-name">Volunteer Hub</span><span class="wordmark-sub">Community program</span></a>
     <div class="topbar-links"><a href="#events">События</a><a href="#passport">Мои записи</a><a href="#impact">Вклад</a></div>
-    <div class="topbar-actions"><button class="btn btn-nav" onclick="openAuth('login')">Войти</button><button class="btn btn-nav btn-nav-primary" onclick="openAuth('register')">Координаторам</button><button id="langToggle" class="btn lang-button" onclick="toggleLang()">ҚАЗ</button></div>
+    <div class="topbar-actions"><a class="btn btn-nav feedback-link" href="feedback.html" target="_blank" rel="noopener">Отзыв</a><button class="btn btn-nav" onclick="openAuth('login')">Войти</button><button class="btn btn-nav btn-nav-primary" onclick="openAuth('register')">Координаторам</button><button id="langToggle" class="btn lang-button" onclick="toggleLang()">ҚАЗ</button></div>
   </nav>
   <div class="hero-content">
     <div class="hero-copy"><p class="hero-overline">CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM</p><h1>Ваш вклад<br><em>начинается здесь.</em></h1><p id="lang-tag">Корпоративное волонтёрство в один клик</p><div class="hero-actions"><a class="btn hero-cta" href="#events">Найти событие</a><a class="hero-secondary" href="#passport">Мои записи <span aria-hidden="true">→</span></a></div></div>
@@ -374,7 +374,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     <div id="topResults"></div>
   </section>
 
-  <section class="section feedback">
+  <section class="section feedback hidden" aria-hidden="true">
     <h2 class="section-title" id="lang-fb-title">Оставить отзыв о платформе</h2>
     <form id="feedbackForm" class="card" onsubmit="sendFeedback(event)">
       <label id="lang-lbl-name">Имя</label>
