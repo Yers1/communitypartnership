@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#2d6a4f"/>
-  <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" font-size="260">🌱</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Volunteer Hub">
+  <rect width="64" height="64" rx="16" fill="#123f38"/>
+  <path d="M18 15 34 49 42 33 34 18c-3-4-11-4-16-3Z" fill="#0c5e50"/>
+  <path d="M37 14c9-1 14 2 14 9v9c0 11-9 18-22 19 2-13 7-25 22-37-4 7-11 12-19 17 3-8 5-13 5-17Z" fill="#e0b33f"/>
+  <path d="M31 45c5-13 12-22 21-28-8 10-14 19-18 30Z" fill="#fffdf8"/>
 </svg>

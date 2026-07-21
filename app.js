@@ -1,5 +1,5 @@
 var supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-var COMPANY = window.COMPANY || { name: 'Chevron', program: 'Employee Volunteer Program — NVS \u0026 Zhurekten Zhurekke', emoji: '\ud83c\udf31', color: '#2d6a4f' };
+var COMPANY = window.COMPANY || { name: 'Chevron', program: 'Employee Volunteer Program — NVS \u0026 Zhurekten Zhurekke', color: '#0c5e50' };
 
 var EVENTS = [];
 var CITY = 'all';
@@ -114,7 +114,7 @@ var T = {
     already_signed: 'Вы уже записаны на это событие',
     cancel_btn: 'Отменить',
     past: 'Событие прошло',
-    net_err: 'Нет соединения. Проверьте интернет.',
+    net_err: 'Не удалось завершить действие. Проверьте соединение и повторите попытку.',
     impact_title: 'Наш вклад',
     impact_hours: 'Часов волонтёрства',
     impact_people: 'Волонтёров',
@@ -242,7 +242,7 @@ var T = {
     already_signed: 'Сіз бұл іс-шараға тіркелгенсіз',
     cancel_btn: 'Болдырмау',
     past: 'Іс-шара өтті',
-    net_err: 'Байланыс жоқ. Интернетті тексеріңіз.',
+    net_err: 'Әрекет орындалмады. Байланысты тексеріп, қайталап көріңіз.',
     impact_title: 'Біздің үлесіміз',
     impact_hours: 'Волонтерлік сағат',
     impact_people: 'Волонтер',
@@ -370,7 +370,7 @@ var T = {
     already_signed: 'You are already signed up for this event',
     cancel_btn: 'Cancel',
     past: 'Event has passed',
-    net_err: 'No connection. Please check your internet.',
+    net_err: 'The action could not be completed. Check your connection and try again.',
     impact_title: 'Our impact',
     impact_hours: 'Volunteer hours',
     impact_people: 'Volunteers',
@@ -458,9 +458,23 @@ function setLangStatic() {
   ['date_all', 'date_future', 'date_past', 'date_week', 'date_month'].forEach(function(k, i) { if (dateOpts.options[i]) dateOpts.options[i].textContent = dates[i] || t(k); });
 }
 
+function uiIcon(name, className) {
+  var paths = {
+    leaf: '<path d="M19 4C10 4 5 8.5 5 15c0 2.5 1.2 4.2 2.5 5C14 20 19 14.5 19 4Z"/><path d="M4 20c3.5-4.2 7.5-6.9 12-9"/>',
+    users: '<circle cx="9" cy="8" r="3"/><path d="M3.5 20c.5-3.5 2.5-5.5 5.5-5.5s5 2 5.5 5.5M16 5.5a3 3 0 0 1 0 5.7M18.5 20c-.2-2.2-1.1-3.8-2.8-4.7"/>',
+    paw: '<circle cx="7" cy="8" r="1.5"/><circle cx="12" cy="5.5" r="1.5"/><circle cx="17" cy="8" r="1.5"/><path d="M8 18c0-3 1.7-5 4-5s4 2 4 5c0 1.2-.9 2-2 2H10c-1.1 0-2-.8-2-2Z"/>',
+    heart: '<path d="M20 8.5C20 14 12 19 12 19S4 14 4 8.5C4 6 5.8 4.5 8 4.5c1.7 0 3.1.9 4 2.2.9-1.3 2.3-2.2 4-2.2 2.2 0 4 1.5 4 4Z"/>',
+    book: '<path d="M4 5.5A3.5 3.5 0 0 1 7.5 4H12v16H7.5A3.5 3.5 0 0 0 4 23V5.5ZM20 5.5A3.5 3.5 0 0 0 16.5 4H12v16h4.5A3.5 3.5 0 0 1 20 23V5.5Z"/>',
+    link: '<path d="M10 13.8a4.2 4.2 0 0 0 6.1.1l2-2a4.2 4.2 0 0 0-5.9-5.9l-1.1 1.1"/><path d="M14 10.2a4.2 4.2 0 0 0-6.1-.1l-2 2a4.2 4.2 0 1 0 5.9 5.9l1.1-1.1"/>',
+    calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+    award: '<circle cx="12" cy="8" r="4"/><path d="m8.5 12-1.5 8 5-2.5 5 2.5-1.5-8"/>',
+    trash: '<path d="M4 7h16M10 11v5M14 11v5M9 7l1-3h4l1 3M6 7l1 14h10l1-14"/>'
+  };
+  return '<svg class="ui-icon ' + (className || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.leaf) + '</svg>';
+}
 function categoryIcon(cat) {
-  var map = { 'Экология': '\ud83c\udf33', 'Дети': '\ud83e\uddd2', 'Образование': '\ud83d\udcda', 'Здоровье': '\u2764\ufe0f' };
-  return map[cat] || '\ud83c\udf31';
+  var map = { 'Экология': 'leaf', 'Дети': 'users', 'Животные': 'paw', 'Пожилые': 'users', 'Образование': 'book', 'Здоровье': 'heart', 'Поддержка семьи': 'users' };
+  return uiIcon(map[cat] || 'leaf');
 }
 
 function renderStats() {
@@ -537,7 +551,7 @@ function renderEvents() {
   });
   var html;
   if (!filtered.length) {
-    html = '<div class="card empty"><div class="emoji">' + COMPANY.emoji + '</div><h3>' + (SEARCH ? t('empty_search') : t('empty_events')) + '</h3></div>';
+    html = '<div class="card empty"><div class="empty-icon">' + uiIcon('leaf') + '</div><h3>' + (SEARCH ? t('empty_search') : t('empty_events')) + '</h3></div>';
   } else {
     html = filtered.map(function(e) {
       var signed = e.signups.length;
@@ -559,10 +573,10 @@ function renderEvents() {
         social +
         '<div class="actions">' +
           '<button class="btn" ' + (past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')">' + (past ? t('past') : (full ? 'В резерв' : t('signup'))) + '</button>' +
-          '<button class="btn-ghost btn-small" onclick="shareEvent(' + e.id + ')">\ud83d\udd17 ' + t('share') + '</button>' +
+          '<button class="btn-ghost btn-small" onclick="shareEvent(' + e.id + ')">' + uiIcon('link') + ' ' + t('share') + '</button>' +
           '<button class="btn-wa btn-small" onclick="shareWA(' + e.id + ')">' + t('wa_btn') + '</button>' +
           '<button class="btn-tg btn-small" onclick="shareTG(' + e.id + ')">' + t('tg_btn') + '</button>' +
-          '<button class="btn-cal btn-small" onclick="downloadICS(' + e.id + ')">\ud83d\udcc5 ' + t('cal_btn') + '</button>' +
+          '<button class="btn-cal btn-small" onclick="downloadICS(' + e.id + ')">' + uiIcon('calendar') + ' ' + t('cal_btn') + '</button>' +
         '</div>' +
         '<div class="signup-form" id="signup-' + e.id + '">' +
           '<input placeholder="' + escAttr(t('your_name')) + '" id="name-' + e.id + '" aria-label="' + t('your_name') + '">' +
@@ -616,7 +630,7 @@ function renderDash() {
         '<button class="btn btn-small" onclick="downloadCSV(' + e.id + ')">' + t('csv_btn') + '</button>' +
         '<button class="btn btn-small btn-outline" onclick="duplicateEvent(' + e.id + ')">' + t('dup_btn') + '</button>' +
         '<button class="btn btn-small btn-outline" onclick="startEdit(' + e.id + ')">' + t('edit_btn') + '</button>' +
-        '<button class="btn btn-small btn-danger" onclick="deleteEvent(' + e.id + ')">\ud83d\uddd1</button>' +
+        '<button class="btn btn-small btn-danger" onclick="deleteEvent(' + e.id + ')">' + uiIcon('trash') + '</button>' +
         '</div>';
     }
     html += '</div>';
@@ -631,14 +645,14 @@ function renderTop() {
   var sorted = Object.keys(map).map(function(n) { return [n, map[n]]; }).sort(function(a, b) { return b[1] - a[1]; });
   var html = '';
   if (!sorted.length) {
-    html = '<div class="card empty"><div class="emoji">' + COMPANY.emoji + '</div><h3>' + t('empty_top') + '</h3></div>';
+    html = '<div class="card empty"><div class="empty-icon">' + uiIcon('leaf') + '</div><h3>' + t('empty_top') + '</h3></div>';
   } else {
     var top = sorted.slice(0, 3);
     var rest = sorted.slice(3);
     html += '<div class="podium">';
-    if (top[1]) html += '<div class="podium-item second"><div class="emoji">\ud83e\udd48</div><div class="name">' + esc(top[1][0]) + '</div><div class="count">' + top[1][1] + ' ' + t('events_count') + '</div></div>';
-    if (top[0]) html += '<div class="podium-item first"><div class="emoji">\ud83e\udd47</div><div class="name">' + esc(top[0][0]) + '</div><div class="count">' + top[0][1] + ' ' + t('events_count') + '</div></div>';
-    if (top[2]) html += '<div class="podium-item third"><div class="emoji">\ud83e\udd49</div><div class="name">' + esc(top[2][0]) + '</div><div class="count">' + top[2][1] + ' ' + t('events_count') + '</div></div>';
+    if (top[1]) html += '<div class="podium-item second"><div class="rank-mark">02</div><div class="name">' + esc(top[1][0]) + '</div><div class="count">' + top[1][1] + ' ' + t('events_count') + '</div></div>';
+    if (top[0]) html += '<div class="podium-item first"><div class="rank-mark">01</div><div class="name">' + esc(top[0][0]) + '</div><div class="count">' + top[0][1] + ' ' + t('events_count') + '</div></div>';
+    if (top[2]) html += '<div class="podium-item third"><div class="rank-mark">03</div><div class="name">' + esc(top[2][0]) + '</div><div class="count">' + top[2][1] + ' ' + t('events_count') + '</div></div>';
     html += '</div>';
     if (rest.length) {
       html += '<div class="leader-list"><ol>' + rest.map(function(x) { return '<li><span>' + esc(x[0]) + '</span><b>' + x[1] + ' ' + t('events_count') + '</b></li>'; }).join('') + '</ol></div>';
@@ -671,7 +685,7 @@ async function doSignup(id) {
   try {
     var resp = await supabase.from('signups').insert({event_id: id, name: name, contact: contact}).select();
     if (resp.error) { showMsg('signupMsg-' + id, resp.error.message, true); return; }
-    var certHtml = '<button class="btn btn-cert" data-id="' + id + '" data-name="' + escAttr(name) + '" onclick="genCert(this.dataset.id, this.dataset.name)">\ud83c\udfc5 ' + t('cert_btn') + '</button>';
+    var certHtml = '<button class="btn btn-cert" data-id="' + id + '" data-name="' + escAttr(name) + '" onclick="genCert(this.dataset.id, this.dataset.name)">' + uiIcon('award') + ' ' + t('cert_btn') + '</button>';
     document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + t('signed_up') + '</span> ' + certHtml;
     confetti();
     document.getElementById('name-' + id).value = '';
@@ -865,20 +879,20 @@ async function lookupPassport(e) {
     var mine = EVENTS.filter(function(e) { return e.signups.some(function(s) { return s.contact.toLowerCase().trim() === contact; }); });
     var html = '';
     if (!mine.length) {
-      html = '<div class="card empty"><div class="emoji">' + COMPANY.emoji + '</div><h3>' + t('empty_passport') + '</h3></div>';
+      html = '<div class="card empty"><div class="empty-icon">' + uiIcon('leaf') + '</div><h3>' + t('empty_passport') + '</h3></div>';
     } else {
       var hours = mine.length * 3;
       var level = mine.length < 3 ? 1 : mine.length < 5 ? 2 : 3;
       var levelKey = level === 1 ? 'level_1' : level === 2 ? 'level_2' : 'level_3';
-      var levelEmoji = level === 1 ? '\ud83c\udf31' : level === 2 ? '\ud83c\udf3f' : '\ud83c\udf33';
+      var levelIcon = level === 1 ? 'leaf' : level === 2 ? 'users' : 'award';
       var next = level === 1 ? 3 - mine.length : level === 2 ? 5 - mine.length : 0;
-      html += '<div class="card level-card"><div class="emoji">' + levelEmoji + '</div><h3>' + levelEmoji + ' ' + t(levelKey) + '</h3><p><b>' + mine.length + '</b> ' + t('events_count') + ' \u00b7 <b>' + hours + '</b> ' + t('passport_hours') + '</p>';
+      html += '<div class="card level-card"><div class="level-icon">' + uiIcon(levelIcon) + '</div><h3>' + t(levelKey) + '</h3><p><b>' + mine.length + '</b> ' + t('events_count') + ' \u00b7 <b>' + hours + '</b> ' + t('passport_hours') + '</p>';
       if (next > 0) html += '<div class="progress"><div class="progress-fill" style="width:' + (mine.length/(mine.length+next)*100) + '%"></div></div><p class="next">' + t('next_level').replace('N', next) + '</p>';
       html += '</div>';
       html += mine.map(function(e) {
         return '<div class="card"><h3>' + esc(e.title) + '</h3><p class="meta">' + esc(e.city) + ' \u00b7 ' + fmtDate(e.date) + '</p>' +
           '<div class="actions">' +
-            '<button class="btn btn-cert" data-id="' + e.id + '" data-name="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="genCert(this.dataset.id, this.dataset.name)">\ud83c\udfc5 ' + t('cert_btn') + '</button>' +
+            '<button class="btn btn-cert" data-id="' + e.id + '" data-name="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="genCert(this.dataset.id, this.dataset.name)">' + uiIcon('award') + ' ' + t('cert_btn') + '</button>' +
             '<button class="btn btn-outline" data-id="' + e.id + '" data-contact="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="cancelSignup(this.dataset.id, this.dataset.contact)">' + t('cancel_btn') + '</button>' +
           '</div></div>';
       }).join('');
@@ -971,12 +985,12 @@ function genCert(id, name) {
   grd.addColorStop(1, '#b7e4c7');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, 900, 640);
-  ctx.font = '120px system-ui'; ctx.globalAlpha = 0.08; ctx.fillStyle = COMPANY.color;
-  for (var i = 0; i < 5; i++) { ctx.fillText(COMPANY.emoji, 80 + i * 180, 200 + i * 120); }
+  ctx.globalAlpha = 0.08; ctx.strokeStyle = COMPANY.color; ctx.lineWidth = 2;
+  for (var i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(100 + i * 180, 180 + i * 90, 44, 0, Math.PI * 2); ctx.stroke(); }
   ctx.globalAlpha = 1;
   ctx.lineWidth = 12; ctx.strokeStyle = COMPANY.color; ctx.strokeRect(24, 24, 852, 592);
   ctx.lineWidth = 4; ctx.strokeStyle = '#74c69d'; ctx.strokeRect(36, 36, 828, 568);
-  ctx.font = '60px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = COMPANY.color; ctx.fillText(COMPANY.emoji, 450, 110);
+  ctx.textAlign = 'center'; ctx.fillStyle = COMPANY.color; ctx.beginPath(); ctx.arc(450, 95, 24, 0, Math.PI * 2); ctx.fill();
   ctx.font = 'bold 48px system-ui'; ctx.fillText(t('cert_title'), 450, 170);
   ctx.font = '22px system-ui'; ctx.fillText(t('cert_name'), 450, 230);
   ctx.font = 'bold 56px system-ui'; ctx.fillStyle = '#1b4332'; ctx.fillText(name, 450, 310);
@@ -1061,9 +1075,13 @@ function init() {
     }
   });
   if (me) setTimeout(function() { lookupPassport(null); }, 800);
-  window.addEventListener('error', function(e) {
+  window.addEventListener('offline', function() {
     var el = document.getElementById('globalError');
     if (el) { el.textContent = t('net_err'); el.classList.remove('hidden'); }
+  });
+  window.addEventListener('online', function() {
+    var el = document.getElementById('globalError');
+    if (el) el.classList.add('hidden');
   });
 }
 

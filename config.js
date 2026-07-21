@@ -6,6 +6,5 @@ window.SUPABASE_ANON_KEY = "sb_publishable_8DKCxcBrpI0vAkOsalhjgQ_sCFIxqOG";
 window.COMPANY = {
   name: "Chevron",
   program: "Employee Volunteer Program — NVS & Zhurekten Zhurekke",
-  emoji: "🌱",
-  color: "#2d6a4f"
+  color: "#0c5e50"
 };
