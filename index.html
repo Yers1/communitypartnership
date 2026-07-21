@@ -246,6 +246,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 
 /* System typography and vector icon refinement */
 :root{--apple-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue","Segoe UI",sans-serif}body,.btn,input,select,textarea{font-family:var(--apple-font)}.hero h1,.section-title,.about b,.controls::before,.event-card h3,.impact-card b,.stat-item b{font-family:var(--apple-font);font-weight:700;letter-spacing:-.035em}.hero h1 em{font-style:normal;font-weight:500}.ui-icon{width:1em;height:1em;display:inline-block;flex:0 0 auto;vertical-align:-.15em}.btn .ui-icon,.btn-ghost .ui-icon,.btn-cal .ui-icon{width:15px;height:15px;margin-right:5px}.empty-icon,.level-icon{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 13px;border:1px solid var(--line);color:var(--brand)}.empty-icon .ui-icon,.level-icon .ui-icon{width:23px;height:23px}.rank-mark{display:grid;place-items:center;width:31px;height:31px;margin:0 auto 10px;border:1px solid currentColor;border-radius:50%;font-size:.68rem;font-weight:800;color:var(--brand)}.podium-item.first .rank-mark{color:#9a7315}.podium-item.third .rank-mark{color:#8c5a37}.btn-danger .ui-icon{margin:0}.level-card h3{display:block}.hero h1,.section-title,.event-card h3{text-wrap:balance}
+
+
 </style>
 </head>
 <body>
@@ -258,7 +260,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     <div class="topbar-actions"><button class="btn btn-nav" onclick="openAuth('login')">Войти</button><button class="btn btn-nav btn-nav-primary" onclick="openAuth('register')">Координаторам</button><button id="langToggle" class="btn lang-button" onclick="toggleLang()">ҚАЗ</button></div>
   </nav>
   <div class="hero-content">
-    <div class="hero-copy"><p class="hero-overline">CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM</p><h1>Действия,<br><em>которые остаются.</em></h1><p id="lang-tag">Корпоративное волонтёрство в один клик</p><div class="hero-actions"><a class="btn hero-cta" href="#events">Найти событие</a><a class="hero-secondary" href="#passport">Мои записи <span aria-hidden="true">→</span></a></div></div>
+    <div class="hero-copy"><p class="hero-overline">CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM</p><h1>Ваш вклад<br><em>начинается здесь.</em></h1><p id="lang-tag">Корпоративное волонтёрство в один клик</p><div class="hero-actions"><a class="btn hero-cta" href="#events">Найти событие</a><a class="hero-secondary" href="#passport">Мои записи <span aria-hidden="true">→</span></a></div></div>
     <aside class="brand-asset" aria-label="Volunteer Hub"><img src="assets/volunteer-hub-logo.png" alt="Volunteer Hub"><p>Вместе с NVS &amp; Zhurekten Zhurekke</p></aside>
   </div>
 </header>
@@ -317,35 +319,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     </div>
   </section>
 
-  <section class="section">
-    <h2 class="section-title" id="lang-coord-title">Координатор</h2>
-    <div id="coordinatorForm" class="card">
-      <div class="auth-tabs">
-        <button id="tabLogin" class="active" onclick="showAuthTab('login')">Вход</button>
-        <button id="tabRegister" onclick="showAuthTab('register')">Регистрация</button>
-      </div>
-      <form id="loginForm" class="auth-form active" onsubmit="loginCoord(event)">
-        <label id="lang-lbl-email">Email</label>
-        <input id="coordEmail" type="email" required>
-        <label id="lang-lbl-password">Пароль</label>
-        <input id="coordPassword" type="password" required>
-        <div id="loginMsg"></div>
-        <button type="submit" class="btn" id="lang-btn-login">Войти</button>
-      </form>
-      <form id="registerForm" class="auth-form" onsubmit="registerCoord(event)">
-        <label id="lang-lbl-reg-email">Email</label>
-        <input id="coordRegEmail" type="email" required>
-        <label id="lang-lbl-reg-password">Пароль</label>
-        <input id="coordRegPassword" type="password" minlength="6" required>
-        <label id="lang-lbl-reg-password2">Повторите пароль</label>
-        <input id="coordRegPassword2" type="password" minlength="6" required>
-        <div id="registerMsg"></div>
-        <button type="submit" class="btn" id="lang-btn-register">Зарегистрироваться</button>
-        <p class="auth-note" id="lang-reg-note">После регистрации администратор подтвердит вашу заявку.</p>
-      </form>
+  <dialog id="authDialog" class="auth-dialog" aria-labelledby="lang-coord-title">
+    <div id="coordinatorForm" class="auth-card">
+      <div class="auth-dialog-head"><div><p class="auth-kicker">Volunteer Hub</p><h2 id="lang-coord-title">Координатор</h2></div><button class="icon-close" type="button" onclick="closeAuth()" aria-label="Закрыть">×</button></div>
+      <div class="auth-tabs"><button id="tabLogin" class="active" onclick="showAuthTab('login')">Вход</button><button id="tabRegister" onclick="showAuthTab('register')">Регистрация</button></div>
+      <form id="loginForm" class="auth-form active" onsubmit="loginCoord(event)"><label id="lang-lbl-email">Email</label><input id="coordEmail" type="email" autocomplete="email" required><label id="lang-lbl-password">Пароль</label><input id="coordPassword" type="password" autocomplete="current-password" required><div id="loginMsg"></div><button type="submit" class="btn" id="lang-btn-login">Войти</button></form>
+      <form id="registerForm" class="auth-form" onsubmit="registerCoord(event)"><label id="lang-lbl-reg-email">Email</label><input id="coordRegEmail" type="email" autocomplete="email" required><label id="lang-lbl-reg-password">Пароль</label><input id="coordRegPassword" type="password" autocomplete="new-password" minlength="6" required><label id="lang-lbl-reg-password2">Повторите пароль</label><input id="coordRegPassword2" type="password" autocomplete="new-password" minlength="6" required><div id="registerMsg"></div><button type="submit" class="btn" id="lang-btn-register">Зарегистрироваться</button><p class="auth-note" id="lang-reg-note">После регистрации администратор подтвердит вашу заявку.</p></form>
     </div>
-  </section>
-
+  </dialog>
   <div id="addEventSection" class="section hidden">
     <div class="card">
       <div class="dash-header">

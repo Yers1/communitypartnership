@@ -499,7 +499,20 @@ function renderImpact() {
     '<div class="impact-card"><b>' + cities + '</b><span>' + t('impact_cities') + '</span></div>';
 }
 
-function openAuth(tab) { showAuthTab(tab); document.getElementById('coordinatorForm').scrollIntoView({behavior:'smooth', block:'center'}); document.getElementById('coordEmail').focus(); }
+function openAuth(tab) {
+  if (isCoord) {
+    var dashboard = document.getElementById('dashboard');
+    dashboard.classList.remove('hidden');
+    dashboard.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+  tab = tab || 'login';
+  showAuthTab(tab);
+  var dialog = document.getElementById('authDialog');
+  if (!dialog.open) dialog.showModal();
+  setTimeout(function() { document.getElementById(tab === 'register' ? 'coordRegEmail' : 'coordEmail').focus(); }, 30);
+}
+function closeAuth() { var dialog = document.getElementById('authDialog'); if (dialog && dialog.open) dialog.close(); }
 function setCity(i) { CITY = CITIES[i]; render(); }
 function setCategory(i) { CATEGORY = CATEGORIES[i]; render(); }
 function setDateFilter() { DATE_FILTER = document.getElementById('dateFilter').value; render(); }
@@ -591,51 +604,26 @@ function renderEvents() {
 }
 
 function renderDash() {
-  document.getElementById('dashBtn').classList.toggle('hidden', !isCoord);
-  if (!isCoord) { document.getElementById('dashboard').classList.add('hidden'); return; }
-  var totalSigned = EVENTS.reduce(function(s, e) { return s + e.signups.length; }, 0);
-  var totalSpots = EVENTS.reduce(function(s, e) { return s + (e.spots || 0); }, 0);
-  var avgFill = totalSpots ? Math.round(totalSigned / totalSpots * 100) : 0;
-  var allContacts = [];
-  EVENTS.forEach(function(e) { e.signups.forEach(function(s) { if (allContacts.indexOf(s.contact) === -1) allContacts.push(s.contact); }); });
-
-  var html = '<div class="card report"><div class="dash-header"><h2 class="section-title">' + t('report_title') + '</h2>' +
-    '<button class="btn btn-outline btn-small" onclick="logoutCoord()">' + t('logout') + '</button></div>' +
-    '<div class="report-grid">' +
-    '<div><b>' + EVENTS.length + '</b><span>' + t('events_count') + '</span></div>' +
-    '<div><b>' + totalSigned + '</b><span>' + t('volunteers') + '</span></div>' +
-    '<div><b>' + (totalSigned * 3) + '</b><span>' + t('passport_hours') + '</span></div>' +
-    '<div><b>' + avgFill + '%</b><span>' + t('fill_rate') + '</span></div>' +
-    '</div>' +
-    '<div class="actions"><button class="btn" onclick="copyReport()">' + t('copy_report') + '</button>' +
-    '<button class="btn btn-outline" onclick="copyAllContacts()">' + t('copy_contacts') + '</button>' +
-    '<button class="btn btn-outline" onclick="window.print()">' + t('print_btn') + '</button></div></div>';
-
-  EVENTS.forEach(function(e) {
-    var fill = (e.spots || 1) ? Math.round(e.signups.length / (e.spots || 1) * 100) : 0;
-    var color = fill < 50 ? '#c62828' : fill < 80 ? '#f9a825' : '#2d6a4f';
-    html += '<div class="card dash-event"><h3>' + esc(e.title) + '</h3>' +
-      '<p class="meta">' + esc(e.city) + ' \u00b7 ' + fmtDate(e.date) + '</p>' +
-      '<p>' + t('participants') + ': ' + e.signups.length + ' / ' + e.spots + ' \u00b7 ' + t('fill_rate') + ': ' + fill + '%</p>' +
-      '<div class="bar-bg"><div class="bar-fill" style="width:' + fill + '%;background:' + color + '"></div></div>';
-    if (e.signups.length) {
-      html += '<table><tr><th>' + t('name_hdr') + '</th><th>' + t('contact_hdr') + '</th></tr>' +
-        e.signups.map(function(s) { return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.contact) + '</td></tr>'; }).join('') + '</table>';
-    } else {
-      html += '<p style="color:#999;font-size:0.85em">' + t('empty_top') + '</p>';
-    }
-    if (canEdit) {
-      html += '<div class="actions">' +
-        '<button class="btn btn-small" onclick="copyList(' + e.id + ')">' + t('copy_list') + '</button>' +
-        '<button class="btn btn-small" onclick="downloadCSV(' + e.id + ')">' + t('csv_btn') + '</button>' +
-        '<button class="btn btn-small btn-outline" onclick="duplicateEvent(' + e.id + ')">' + t('dup_btn') + '</button>' +
-        '<button class="btn btn-small btn-outline" onclick="startEdit(' + e.id + ')">' + t('edit_btn') + '</button>' +
-        '<button class="btn btn-small btn-danger" onclick="deleteEvent(' + e.id + ')">' + uiIcon('trash') + '</button>' +
-        '</div>';
-    }
-    html += '</div>';
-  });
-  document.getElementById('dashboard').innerHTML = html;
+  var dashBtn = document.getElementById('dashBtn'), dash = document.getElementById('dashboard');
+  dashBtn.classList.toggle('hidden', !isCoord);
+  if (!isCoord) { dash.classList.add('hidden'); return; }
+  var all = []; EVENTS.forEach(function(e) { e.signups.forEach(function(s) { all.push({event:e, signup:s}); }); });
+  var confirmed = all.filter(function(x) { return !x.signup.status || x.signup.status === 'confirmed'; });
+  var waiting = all.filter(function(x) { return x.signup.status === 'waitlist'; });
+  var checked = confirmed.filter(function(x) { return !!x.signup.checked_in_at; });
+  var totalSpots = EVENTS.reduce(function(sum, e) { return sum + Number(e.spots || 0); }, 0);
+  var fill = totalSpots ? Math.round(confirmed.length / totalSpots * 100) : 0;
+  var attendance = confirmed.length ? Math.round(checked.length / confirmed.length * 100) : 0;
+  var upcoming = EVENTS.filter(function(e) { return e.date >= today; }).sort(function(a,b) { return a.date.localeCompare(b.date); });
+  var risks = upcoming.filter(function(e) { return e.signups.filter(function(s) { return !s.status || s.status === 'confirmed'; }).length / Math.max(1, e.spots) < .55; }).slice(0, 3);
+  var html = '<div class="coord-shell"><div class="coord-topline"><div><p>Кабинет координатора</p><h2>Волонтёрская программа</h2></div><div class="coord-actions"><button class="btn btn-outline btn-small" onclick="copyReport()">Скопировать отчёт</button><button class="btn btn-outline btn-small" onclick="logoutCoord()">' + t('logout') + '</button></div></div>';
+  html += '<div class="coord-kpi-grid"><div class="coord-kpi"><span>Подтверждённые записи</span><b>' + confirmed.length + '</b><small>из ' + totalSpots + ' мест</small></div><div class="coord-kpi"><span>Средняя загрузка</span><b>' + fill + '%</b><small>' + EVENTS.length + ' событий</small></div><div class="coord-kpi"><span>Резервный список</span><b>' + waiting.length + '</b><small>ожидают место</small></div><div class="coord-kpi"><span>Подтверждённый check-in</span><b>' + checked.length + '</b><small>' + (checked.length * 3) + ' волонтёрских часов</small></div></div>';
+  html += '<div class="coord-grid"><section class="coord-panel"><h3>Загрузка ближайших событий</h3><p>Сразу видно, где нужен дополнительный набор.</p>';
+  if (upcoming.length) html += upcoming.slice(0,5).map(function(e) { var used = e.signups.filter(function(s) { return !s.status || s.status === 'confirmed'; }).length, pct = Math.min(100, Math.round(used / Math.max(1,e.spots) * 100)); return '<div class="load-row"><div><b>' + esc(e.title) + '</b><span>' + esc(e.city) + ' · ' + fmtDate(e.date) + '</span></div><div class="load-track"><i style="width:' + pct + '%"></i></div><strong>' + used + '/' + e.spots + '</strong></div>'; }).join(''); else html += '<p>Пока нет будущих событий.</p>';
+  html += '</section><section class="coord-panel"><h3>Посещаемость</h3><p>По отметкам на площадке.</p><div class="attendance"><div class="attendance-ring" style="--attendance:' + attendance + '%"><b>' + attendance + '%</b></div><div class="attendance-copy"><b>' + checked.length + '</b><span>отметились из ' + confirmed.length + ' подтверждённых</span></div></div></section></div>';
+  if (risks.length) html += '<section class="coord-risk"><h3>Требуют внимания</h3>' + risks.map(function(e) { var used=e.signups.filter(function(s){return !s.status||s.status==='confirmed';}).length; return '<div class="coord-risk-row"><div><strong>' + esc(e.title) + '</strong><small>' + fmtDate(e.date) + ' · ' + esc(e.city) + '</small></div><b>' + used + '/' + e.spots + ' мест</b></div>'; }).join('') + '</section>';
+  html += '<div class="coord-event-list">' + EVENTS.map(function(e) { var eventConfirmed=e.signups.filter(function(s){return !s.status||s.status==='confirmed';}), eventWait=e.signups.filter(function(s){return s.status==='waitlist';}), eventFill=Math.round(eventConfirmed.length/Math.max(1,e.spots)*100); return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (eventConfirmed.length ? '<table><tr><th>' + t('name_hdr') + '</th><th>' + t('contact_hdr') + '</th><th>Статус</th></tr>' + eventConfirmed.slice(0,8).map(function(s){var done=!!s.checked_in_at;return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.contact) + '</td><td>' + (done ? '<span class="coord-status">Отмечен</span>' : '<button class="btn btn-small" onclick="checkInSignup(' + e.id + ',' + s.id + ')">Check-in</button>') + '</td></tr>';}).join('') + '</table>' : '<p>Пока нет подтверждённых участников.</p>') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button></div></article>'; }).join('') + '</div></div>';
+  dash.innerHTML = html;
 }
 
 function renderPassport() { /* on lookup */ }
@@ -683,10 +671,12 @@ async function doSignup(id) {
   }
   setElementDisabled(btn, true);
   try {
-    var resp = await supabase.from('signups').insert({event_id: id, name: name, contact: contact}).select();
+    var confirmedCount = ev ? ev.signups.filter(function(s) { return !s.status || s.status === 'confirmed'; }).length : 0;
+    var signupStatus = ev && confirmedCount >= ev.spots ? 'waitlist' : 'confirmed';
+    var resp = await supabase.from('signups').insert({event_id: id, name: name, contact: contact, status: signupStatus}).select();
     if (resp.error) { showMsg('signupMsg-' + id, resp.error.message, true); return; }
     var certHtml = '<button class="btn btn-cert" data-id="' + id + '" data-name="' + escAttr(name) + '" onclick="genCert(this.dataset.id, this.dataset.name)">' + uiIcon('award') + ' ' + t('cert_btn') + '</button>';
-    document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + t('signed_up') + '</span> ' + certHtml;
+    document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + (signupStatus === 'waitlist' ? 'Вы в резервном списке. Освободившееся место будет предложено автоматически.' : t('signed_up')) + '</span> ' + (signupStatus === 'waitlist' ? '' : certHtml);
     confetti();
     document.getElementById('name-' + id).value = '';
     document.getElementById('contact-' + id).value = '';
@@ -727,9 +717,11 @@ async function loginCoord(e) {
     sessionStorage.setItem('coordEmail', email);
     isCoord = true;
     showMsg('loginMsg', '', false);
-    document.getElementById('coordinatorForm').classList.add('hidden');
+    closeAuth();
     document.getElementById('addEventSection').classList.remove('hidden');
     render();
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('dashboard').scrollIntoView({behavior:'smooth', block:'start'});
   } catch (err) { netMsg('loginMsg'); }
   finally { setElementDisabled(btn, false); }
 }
@@ -766,7 +758,7 @@ async function logoutCoord() {
   sessionStorage.removeItem('coordEmail');
   isCoord = false;
   document.getElementById('addEventSection').classList.add('hidden');
-  document.getElementById('coordinatorForm').classList.remove('hidden');
+  closeAuth();
   render();
 }
 
@@ -1016,7 +1008,7 @@ function confetti() {
   }
 }
 
-function toggleDash() { document.getElementById('dashboard').classList.toggle('hidden'); }
+function toggleDash() { var dash = document.getElementById('dashboard'); dash.classList.toggle('hidden'); if (!dash.classList.contains('hidden')) dash.scrollIntoView({behavior:'smooth', block:'start'}); }
 
 function doSearch() {
   SEARCH = document.getElementById('searchInput').value;
@@ -1070,7 +1062,6 @@ function init() {
   initAuth().then(function() {
     loadEvents();
     if (isCoord) {
-      document.getElementById('coordinatorForm').classList.add('hidden');
       document.getElementById('addEventSection').classList.remove('hidden');
     }
   });
