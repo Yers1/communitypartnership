@@ -5,7 +5,7 @@ var EVENTS = [];
 var CITY = 'all';
 var CITIES = ['all'];
 var CATEGORY = 'all';
-var CATEGORIES = ['all'];
+var CATEGORIES = ['all', 'Экология', 'Дети', 'Животные', 'Пожилые', 'Образование', 'Здоровье', 'Поддержка семьи'];
 var DATE_FILTER = 'all';
 var SORT = 'date';
 var SEARCH = '';
@@ -485,6 +485,7 @@ function renderImpact() {
     '<div class="impact-card"><b>' + cities + '</b><span>' + t('impact_cities') + '</span></div>';
 }
 
+function openAuth(tab) { showAuthTab(tab); document.getElementById('coordinatorForm').scrollIntoView({behavior:'smooth', block:'center'}); document.getElementById('coordEmail').focus(); }
 function setCity(i) { CITY = CITIES[i]; render(); }
 function setCategory(i) { CATEGORY = CATEGORIES[i]; render(); }
 function setDateFilter() { DATE_FILTER = document.getElementById('dateFilter').value; render(); }
@@ -492,7 +493,7 @@ function doSort() { SORT = document.getElementById('sortSelect').value; render()
 
 function renderFilters() {
   CITIES = ['all'];
-  CATEGORIES = ['all'];
+  CATEGORIES = ['all', 'Экология', 'Дети', 'Животные', 'Пожилые', 'Образование', 'Здоровье', 'Поддержка семьи'];
   EVENTS.forEach(function(e) { if (CITIES.indexOf(e.city) === -1) CITIES.push(e.city); if (CATEGORIES.indexOf(e.category) === -1) CATEGORIES.push(e.category); });
   var cityHtml = CITIES.map(function(c, i) {
     return '<button class="chip ' + (CITY === c ? 'active' : '') + '" onclick="setCity(' + i + ')">' + (c === 'all' ? t('all') : esc(c)) + '</button>';
@@ -544,7 +545,7 @@ function renderEvents() {
       var full = left <= 0;
       var past = e.date < today;
       var few = !full && !past && left / e.spots <= 0.2;
-      var names = e.signups.slice(0, 3).map(function(s) { return esc(s.name); }).join(', ');
+      var names = confirmed.slice(0, 3).map(function(s) { return esc(s.name); }).join(', ');
       var social = signed > 0 ? '<p class="social">' + names + (signed > 3 ? ' +' + (signed - 3) + ' ' + t('more') : '') + '</p>' : '';
       return '<div class="event-card' + (past ? ' past' : '') + '" id="ev-' + e.id + '">' +
         '<h3>' + esc(e.title) + '</h3>' +
@@ -557,7 +558,7 @@ function renderEvents() {
         (few ? '<p class="few">' + t('few_left') + '</p>' : '') +
         social +
         '<div class="actions">' +
-          '<button class="btn" ' + (full || past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')">' + (past ? t('past') : t('signup')) + '</button>' +
+          '<button class="btn" ' + (past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')">' + (past ? t('past') : (full ? 'В резерв' : t('signup'))) + '</button>' +
           '<button class="btn-ghost btn-small" onclick="shareEvent(' + e.id + ')">\ud83d\udd17 ' + t('share') + '</button>' +
           '<button class="btn-wa btn-small" onclick="shareWA(' + e.id + ')">' + t('wa_btn') + '</button>' +
           '<button class="btn-tg btn-small" onclick="shareTG(' + e.id + ')">' + t('tg_btn') + '</button>' +
@@ -1013,6 +1014,8 @@ async function loadEvents() {
     var resp = await supabase.from('events').select('*, signups(id,name,contact)').order('date', {ascending: true});
     if (resp.error) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + t('load_err') + ': ' + resp.error.message + '</p></div>'; return; }
     EVENTS = resp.data || [];
+    var statuses = await supabase.from('signups').select('id,status');
+    if (!statuses.error) { var byId = {}; statuses.data.forEach(function(s) { byId[s.id] = s.status; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.status = byId[s.id] || 'confirmed'; }); }); }
     var attendance = await supabase.from('signups').select('id,checked_in_at');
     if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x.checked_in_at; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] || null; }); }); }
     render();

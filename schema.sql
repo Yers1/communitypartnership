@@ -63,3 +63,28 @@ create policy "check in" on signups for update to anon using (true) with check (
 -- Проверяемые цифровые сертификаты (выполнить после миграции check-in)
 alter table signups add column if not exists certificate_code text unique;
 alter table signups add column if not exists certificate_issued_at timestamptz;
+
+-- SECURITY v3: сертификат выдаётся только подтверждённым координатором.
+drop policy if exists "check in" on signups;
+create policy "coordinator check in" on signups for update to authenticated
+using (exists (select 1 from coordinator_requests where email = (auth.jwt() ->> 'email') and approved = true))
+with check (exists (select 1 from coordinator_requests where email = (auth.jwt() ->> 'email') and approved = true));
+drop policy if exists "add event" on events;
+create policy "coordinator manages events" on events for insert to authenticated
+with check (exists (select 1 from coordinator_requests where email = (auth.jwt() ->> 'email') and approved = true));
+drop policy if exists "update coordinator_requests" on coordinator_requests;
+drop policy if exists "read coordinator_requests" on coordinator_requests;
+create policy "coordinator reads own request" on coordinator_requests for select to authenticated
+using (email = (auth.jwt() ->> 'email'));
+-- WAITLIST v1: автоматический резервный список.
+alter table signups add column if not exists status text not null default 'confirmed' check (status in ('confirmed', 'waitlist'));
+create or replace function promote_waitlist_after_cancel() returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if old.status = 'confirmed' then
+    update signups set status = 'confirmed' where id = (select id from signups where event_id = old.event_id and status = 'waitlist' order by created_at asc limit 1);
+  end if;
+  return old;
+end;
+$$;
+drop trigger if exists promote_waitlist_after_cancel on signups;
+create trigger promote_waitlist_after_cancel after delete on signups for each row execute function promote_waitlist_after_cancel();
