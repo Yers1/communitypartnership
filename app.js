@@ -405,6 +405,7 @@ var T = {
 };
 
 function t(key) { return T[lang][key] || key; }
+function ci(key) { var copy={ru:{checked:'Явка',present:'На месте',checkin:'Отметить',qr:'QR для check-in',reminder:'Скопировать напоминание',reminder_ok:'Напоминание скопировано',checkin_title:'Отметьтесь на месте',checkin_hint:'Введите email или телефон, указанные при записи.',checkin_done:'Вы отмечены. Спасибо за участие!',checkin_fail:'Запись не найдена. Проверьте контакт.',report_present:'Пришло'},kz:{checked:'Қатысу',present:'Келді',checkin:'Белгілеу',qr:'Check-in QR',reminder:'Еске салуды көшіру',reminder_ok:'Еске салу көшірілді',checkin_title:'Қатысқаныңызды растаңыз',checkin_hint:'Тіркелу кезіндегі email не телефонды енгізіңіз.',checkin_done:'Сіз белгілендіңіз. Рақмет!',checkin_fail:'Тіркелу табылмады.',report_present:'Келді'},en:{checked:'Attendance',present:'Present',checkin:'Check in',qr:'Check-in QR',reminder:'Copy reminder',reminder_ok:'Reminder copied',checkin_title:'Check in on site',checkin_hint:'Enter the email or phone used when registering.',checkin_done:'You are checked in. Thank you!',checkin_fail:'Registration not found.',report_present:'Present'}};return(copy[lang]||copy.ru)[key]||key;}
 function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escAttr(s) { return esc(s).replace(/"/g, '\u0026quot;').replace(/'/g, '\u0026#39;'); }
 function fmtDate(d) { return new Date(d).toLocaleDateString(lang === 'kz' ? 'kk-KZ' : lang === 'en' ? 'en-GB' : 'ru-RU', {day:'numeric', month:'long', year:'numeric'}); }
@@ -648,6 +649,13 @@ function renderTop() {
 function render() { renderStats(); renderImpact(); renderFilters(); renderEvents(); renderDash(); renderTop(); }
 
 function toggleSignup(id) { document.getElementById('signup-' + id).classList.toggle('open'); }
+
+async function checkInSignup(eventId,signupId){var resp=await supabase.from('signups').update({checked_in_at:new Date().toISOString()}).eq('id',signupId);if(resp.error){alert('Check-in unavailable: apply the database migration first.');return;}var ev=EVENTS.find(function(e){return e.id===eventId;}),s=ev&&ev.signups.find(function(x){return x.id===signupId;});if(s)s.checked_in_at=new Date().toISOString();renderDash();}
+function showCheckinQR(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var url=location.origin+location.pathname+'?checkin='+eventId;document.getElementById('qrTitle').textContent=ci('qr')+': '+ev.title;document.getElementById('qrImage').src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(url);document.getElementById('qrLink').textContent=url;document.getElementById('qrLink').href=url;document.getElementById('qrDialog').showModal();}
+function closeQR(){document.getElementById('qrDialog').close();}
+function copyReminder(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var text='Напоминание: «'+ev.title+'» — '+fmtDate(ev.date)+', '+ev.city+'. Пожалуйста, подтвердите участие и отметьтесь на площадке через QR-код.';navigator.clipboard.writeText(text).then(function(){alert(ci('reminder_ok'));});}
+function renderCheckinGate(){var eventId=Number(new URLSearchParams(location.search).get('checkin')),gate=document.getElementById('checkinGate');if(!eventId||!gate)return;var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;gate.classList.remove('hidden');gate.innerHTML='<div class="checkin-gate"><div><p class="checkin-kicker">'+ci('checkin_title')+'</p><h2>'+esc(ev.title)+'</h2><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p></div><div class="checkin-form"><label>'+ci('checkin_hint')+'</label><input id="checkinContact" type="text" placeholder="Email или телефон"><button class="btn" onclick="selfCheckIn('+ev.id+')">'+ci('checkin')+'</button><div id="checkinMsg"></div></div></div>';}
+async function selfCheckIn(eventId){var contact=(document.getElementById('checkinContact').value||'').trim().toLowerCase(),ev=EVENTS.find(function(e){return e.id===eventId;}),signup=ev&&ev.signups.find(function(s){return String(s.contact).trim().toLowerCase()===contact;}),msg=document.getElementById('checkinMsg');if(!signup){msg.textContent=ci('checkin_fail');msg.className='msg msg-err';return;}var resp=await supabase.from('signups').update({checked_in_at:new Date().toISOString()}).eq('id',signup.id);if(resp.error){msg.textContent='Check-in unavailable: apply the database migration first.';msg.className='msg msg-err';return;}signup.checked_in_at=new Date().toISOString();msg.textContent=ci('checkin_done');msg.className='msg msg-ok';}
 
 async function doSignup(id) {
   var btn = document.getElementById('signupBtn-' + id);
@@ -1002,6 +1010,8 @@ async function loadEvents() {
     var resp = await supabase.from('events').select('*, signups(id,name,contact)').order('date', {ascending: true});
     if (resp.error) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + t('load_err') + ': ' + resp.error.message + '</p></div>'; return; }
     EVENTS = resp.data || [];
+    var attendance = await supabase.from('signups').select('id,checked_in_at');
+    if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x.checked_in_at; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] || null; }); }); }
     render();
     if (location.hash) {
       setTimeout(function() {

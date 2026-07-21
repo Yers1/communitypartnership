@@ -54,3 +54,8 @@ insert into events (title, city, date, category, description, spots) values
 ('Субботник на набережной', 'Атырау', '2026-07-25', 'Экология', 'Уборка мусора на набережной Урала. Перчатки и пакеты выдаём на месте.', 30),
 ('Посадка деревьев в парке', 'Алматы', '2026-08-01', 'Экология', 'Сажаем 100 саженцев вместе с NVS. Инструмент предоставляется.', 25),
 ('Праздник для детей с инвалидностью', 'Астана', '2026-08-08', 'Дети', 'Помогаем провести праздник с Zhurekten Zhurekke: игры, подарки, аниматоры.', 15);
+
+-- Check-in на площадке (выполнить и для уже созданной БД)
+alter table signups add column if not exists checked_in_at timestamptz;
+drop policy if exists "check in" on signups;
+create policy "check in" on signups for update to anon using (true) with check (true);
