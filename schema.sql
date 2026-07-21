@@ -59,3 +59,7 @@ insert into events (title, city, date, category, description, spots) values
 alter table signups add column if not exists checked_in_at timestamptz;
 drop policy if exists "check in" on signups;
 create policy "check in" on signups for update to anon using (true) with check (true);
+
+-- Проверяемые цифровые сертификаты (выполнить после миграции check-in)
+alter table signups add column if not exists certificate_code text unique;
+alter table signups add column if not exists certificate_issued_at timestamptz;
