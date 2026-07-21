@@ -1016,8 +1016,8 @@ async function loadEvents() {
     EVENTS = resp.data || [];
     var statuses = await supabase.from('signups').select('id,status');
     if (!statuses.error) { var byId = {}; statuses.data.forEach(function(s) { byId[s.id] = s.status; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.status = byId[s.id] || 'confirmed'; }); }); }
-    var attendance = await supabase.from('signups').select('id,checked_in_at');
-    if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x.checked_in_at; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] || null; }); }); }
+    var attendance = await supabase.from('signups').select('id,checked_in_at,certificate_code');
+    if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] ? seen[s.id].checked_in_at : null; s.certificate_code = seen[s.id] ? seen[s.id].certificate_code : null; }); }); }
     render();
     if (location.hash) {
       setTimeout(function() {
