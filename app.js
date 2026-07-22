@@ -21,6 +21,12 @@ var today = new Date().toISOString().slice(0, 10);
 var T = {
   ru: {
     tagline: 'Корпоративное волонтёрство в один клик',
+    hero_overline: 'CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM',
+    hero_title_1: 'Ваш вклад',
+    hero_title_2: 'начинается здесь.',
+    hero_cta: 'Найти событие',
+    nav_feedback: 'Отзыв',
+    nav_coordinators: 'Координаторам',
     about_title: '',
     about_text: 'Субботники, посадка деревьев, поддержка детей с инвалидностью и из малообеспеченных семей. Города: Астана, Алматы, Атырау. Выберите событие и запишитесь в 1 клик.',
     events_title: 'События',
@@ -151,6 +157,12 @@ var T = {
   },
   kz: {
     tagline: 'Бір басумен корпоративтік волонтерлік',
+    hero_overline: 'CHEVRON ҚАЗАҚСТАН · ҚОҒАМДЫҚ БАҒДАРЛАМА',
+    hero_title_1: 'Сіздің үлесіңіз',
+    hero_title_2: 'осы жерден басталады.',
+    hero_cta: 'Іс-шараны табу',
+    nav_feedback: 'Пікір',
+    nav_coordinators: 'Координаторларға',
     about_title: '',
     about_text: 'Сенбіліктер, ағаш отырғызу, мүгедек және аз қамтылған балаларға қолдау. Қалалар: Астана, Алматы, Атырау. Іс-шараны таңдап, 1 басумен тіркеліңіз.',
     events_title: 'Іс-шаралар',
@@ -281,6 +293,12 @@ var T = {
   },
   en: {
     tagline: 'Corporate volunteering in one click',
+    hero_overline: 'CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM',
+    hero_title_1: 'Your impact',
+    hero_title_2: 'starts here.',
+    hero_cta: 'Find an event',
+    nav_feedback: 'Feedback',
+    nav_coordinators: 'For coordinators',
     about_title: '',
     about_text: 'Clean-ups, tree planting, support for children with disabilities and from low-income families. Cities: Astana, Almaty, Atyrau. Choose an event and sign up in 1 click.',
     events_title: 'Events',
@@ -433,7 +451,11 @@ function setLang(l) {
 }
 function setLangStatic() {
   var map = {
-    'lang-tag': 'tagline', 'lang-about-title': 'about_title', 'lang-about-text': 'about_text',
+    'lang-tag': 'tagline', 'lang-hero-overline': 'hero_overline', 'lang-hero-title-1': 'hero_title_1',
+    'lang-hero-title-2': 'hero_title_2', 'lang-hero-cta': 'hero_cta', 'lang-nav-feedback': 'nav_feedback',
+    'lang-nav-login': 'btn_login', 'lang-nav-coordinators': 'nav_coordinators',
+    'lang-nav-events': 'events_title', 'lang-nav-passport': 'passport_title', 'lang-nav-impact': 'impact_title',
+    'lang-hero-passport': 'passport_title', 'lang-about-title': 'about_title', 'lang-about-text': 'about_text',
     'lang-events-title': 'events_title', 'lang-how-title': 'how_title', 'lang-step1': 'step1',
     'lang-step2': 'step2', 'lang-step3': 'step3', 'lang-coord-title': 'coordinator_title',
     'tabLogin': 'login_tab', 'tabRegister': 'register_tab', 'lang-lbl-email': 'email_lbl',
