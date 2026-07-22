@@ -20,7 +20,7 @@ var today = new Date().toISOString().slice(0, 10);
 
 var T = {
   ru: {
-    tagline: 'Корпоративное волонтёрство в один клик',
+    tagline: 'Выберите важное дело, запишитесь в один клик и сохраните историю своего вклада.',
     hero_overline: 'CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM',
     hero_title_1: 'Ваш вклад',
     hero_title_2: 'начинается здесь.',
@@ -156,7 +156,7 @@ var T = {
     date_options: 'Все,Будущие,Прошедшие,На этой неделе,В этом месяце'
   },
   kz: {
-    tagline: 'Бір басумен корпоративтік волонтерлік',
+    tagline: 'Маңызды істі таңдаңыз, бір басумен тіркеліп, өз үлесіңіздің тарихын сақтаңыз.',
     hero_overline: 'CHEVRON ҚАЗАҚСТАН · ҚОҒАМДЫҚ БАҒДАРЛАМА',
     hero_title_1: 'Сіздің үлесіңіз',
     hero_title_2: 'осы жерден басталады.',
@@ -292,7 +292,7 @@ var T = {
     date_options: 'Барлығы,Алдағы,Өткен,Осы аптада,Осы айда'
   },
   en: {
-    tagline: 'Corporate volunteering in one click',
+    tagline: 'Choose a cause, join in one click, and keep a record of your impact.',
     hero_overline: 'CHEVRON KAZAKHSTAN · COMMUNITY PROGRAM',
     hero_title_1: 'Your impact',
     hero_title_2: 'starts here.',
