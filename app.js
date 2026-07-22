@@ -1,4 +1,4 @@
-var supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+﻿var supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 var COMPANY = window.COMPANY || { name: 'Chevron', program: 'Employee Volunteer Program — NVS \u0026 Zhurekten Zhurekke', color: '#0c5e50' };
 
 var EVENTS = [];
@@ -9,6 +9,7 @@ var CATEGORIES = ['all', 'Экология', 'Дети', 'Животные', 'П
 var DATE_FILTER = 'all';
 var SORT = 'date';
 var SEARCH = '';
+var searchTimer = null;
 var user = null;
 var coordEmail = sessionStorage.getItem('coordEmail') || '';
 var isCoord = false;
@@ -513,10 +514,11 @@ function openAuth(tab) {
   setTimeout(function() { document.getElementById(tab === 'register' ? 'coordRegEmail' : 'coordEmail').focus(); }, 30);
 }
 function closeAuth() { var dialog = document.getElementById('authDialog'); if (dialog && dialog.open) dialog.close(); }
-function setCity(i) { CITY = CITIES[i]; render(); }
-function setCategory(i) { CATEGORY = CATEGORIES[i]; render(); }
-function setDateFilter() { DATE_FILTER = document.getElementById('dateFilter').value; render(); }
-function doSort() { SORT = document.getElementById('sortSelect').value; render(); }
+function renderListing(withFilters) { if (withFilters) renderFilters(); renderEvents(); }
+function setCity(i) { CITY = CITIES[i]; renderListing(true); }
+function setCategory(i) { CATEGORY = CATEGORIES[i]; renderListing(true); }
+function setDateFilter() { DATE_FILTER = document.getElementById('dateFilter').value; renderListing(false); }
+function doSort() { SORT = document.getElementById('sortSelect').value; renderListing(false); }
 
 function renderFilters() {
   CITIES = ['all'];
@@ -1012,7 +1014,8 @@ function toggleDash() { var dash = document.getElementById('dashboard'); dash.cl
 
 function doSearch() {
   SEARCH = document.getElementById('searchInput').value;
-  renderEvents();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(renderEvents, 120);
 }
 
 async function loadEvents() {
@@ -1020,9 +1023,10 @@ async function loadEvents() {
     var resp = await supabase.from('events').select('*, signups(id,name,contact)').order('date', {ascending: true});
     if (resp.error) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + t('load_err') + ': ' + resp.error.message + '</p></div>'; return; }
     EVENTS = resp.data || [];
-    var statuses = await supabase.from('signups').select('id,status');
+    var extras = await Promise.all([supabase.from('signups').select('id,status'), supabase.from('signups').select('id,checked_in_at,certificate_code')]);
+    var statuses = extras[0];
     if (!statuses.error) { var byId = {}; statuses.data.forEach(function(s) { byId[s.id] = s.status; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.status = byId[s.id] || 'confirmed'; }); }); }
-    var attendance = await supabase.from('signups').select('id,checked_in_at,certificate_code');
+    var attendance = extras[1];
     if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] ? seen[s.id].checked_in_at : null; s.certificate_code = seen[s.id] ? seen[s.id].certificate_code : null; }); }); }
     render();
     if (location.hash) {
