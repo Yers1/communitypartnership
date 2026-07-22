@@ -1,4 +1,4 @@
-﻿var supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+var supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 var COMPANY = window.COMPANY || { name: 'Chevron', program: 'Employee Volunteer Program — NVS \u0026 Zhurekten Zhurekke', color: '#0c5e50' };
 
 var EVENTS = [];
@@ -70,6 +70,8 @@ var T = {
     email_phone: 'Email или телефон',
     confirm: 'Подтвердить',
     signed_up: 'Вы записаны!',
+    waitlist_btn: 'В резерв',
+    waitlist_ok: 'Вы в резервном списке. Освободившееся место будет предложено автоматически.',
     feedback_ok: 'Спасибо за отзыв!',
     event_added: 'Событие добавлено!',
     event_saved: 'Событие сохранено!',
@@ -198,6 +200,8 @@ var T = {
     email_phone: 'Email немесе телефон',
     confirm: 'Растау',
     signed_up: 'Сіз тіркелдіңіз!',
+    waitlist_btn: 'Резервке тұру',
+    waitlist_ok: 'Сіз резервтік тізімдесіз. Бос орын пайда болса, ол автоматты түрде ұсынылады.',
     feedback_ok: 'Пікіріңізге рахмет!',
     event_added: 'Іс-шара қосылды!',
     event_saved: 'Іс-шара сақталды!',
@@ -326,6 +330,8 @@ var T = {
     email_phone: 'Email or phone',
     confirm: 'Confirm',
     signed_up: 'You are signed up!',
+    waitlist_btn: 'Join waitlist',
+    waitlist_ok: 'You are on the waitlist. An available spot will be offered automatically.',
     feedback_ok: 'Thank you for your feedback!',
     event_added: 'Event added!',
     event_saved: 'Event saved!',
@@ -410,7 +416,7 @@ function ci(key) { var copy={ru:{checked:'Явка',present:'На месте',ch
 function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escAttr(s) { return esc(s).replace(/"/g, '\u0026quot;').replace(/'/g, '\u0026#39;'); }
 function fmtDate(d) { return new Date(d).toLocaleDateString(lang === 'kz' ? 'kk-KZ' : lang === 'en' ? 'en-GB' : 'ru-RU', {day:'numeric', month:'long', year:'numeric'}); }
-function showMsg(id, text, isErr) { var el = document.getElementById(id); if (el) el.innerHTML = '<div class="msg ' + (isErr ? 'msg-err' : 'msg-ok') + '">' + text + '</div>'; }
+function showMsg(id, text, isErr) { var el = document.getElementById(id); if (el) el.innerHTML = '<div class="msg ' + (isErr ? 'msg-err' : 'msg-ok') + '">' + esc(text) + '</div>'; }
 function netMsg(id) { showMsg(id, t('net_err'), true); }
 function setElementDisabled(el, disabled) { if (el) el.disabled = disabled; }
 
@@ -525,11 +531,11 @@ function renderFilters() {
   CATEGORIES = ['all', 'Экология', 'Дети', 'Животные', 'Пожилые', 'Образование', 'Здоровье', 'Поддержка семьи'];
   EVENTS.forEach(function(e) { if (CITIES.indexOf(e.city) === -1) CITIES.push(e.city); if (CATEGORIES.indexOf(e.category) === -1) CATEGORIES.push(e.category); });
   var cityHtml = CITIES.map(function(c, i) {
-    return '<button class="chip ' + (CITY === c ? 'active' : '') + '" onclick="setCity(' + i + ')">' + (c === 'all' ? t('all') : esc(c)) + '</button>';
+    return '<button type="button" class="chip ' + (CITY === c ? 'active' : '') + '" aria-pressed="' + (CITY === c) + '" onclick="setCity(' + i + ')">' + (c === 'all' ? t('all') : esc(c)) + '</button>';
   }).join('');
   document.getElementById('filters').innerHTML = cityHtml;
   var catHtml = CATEGORIES.map(function(c, i) {
-    return '<button class="chip ' + (CATEGORY === c ? 'active' : '') + '" onclick="setCategory(' + i + ')">' + (c === 'all' ? t('all') : categoryIcon(c) + ' ' + esc(T[lang]['cat_' + c] || c)) + '</button>';
+    return '<button type="button" class="chip ' + (CATEGORY === c ? 'active' : '') + '" aria-pressed="' + (CATEGORY === c) + '" onclick="setCategory(' + i + ')">' + (c === 'all' ? t('all') : categoryIcon(c) + ' ' + esc(T[lang]['cat_' + c] || c)) + '</button>';
   }).join('');
   document.getElementById('categoryChips').innerHTML = catHtml;
 }
@@ -569,7 +575,8 @@ function renderEvents() {
     html = '<div class="card empty"><div class="empty-icon">' + uiIcon('leaf') + '</div><h3>' + (SEARCH ? t('empty_search') : t('empty_events')) + '</h3></div>';
   } else {
     html = filtered.map(function(e) {
-      var signed = e.signups.length;
+      var confirmed = e.signups.filter(function(s) { return !s.status || s.status === 'confirmed'; });
+      var signed = confirmed.length;
       var left = Math.max(0, (e.spots || 0) - signed);
       var full = left <= 0;
       var past = e.date < today;
@@ -587,18 +594,20 @@ function renderEvents() {
         (few ? '<p class="few">' + t('few_left') + '</p>' : '') +
         social +
         '<div class="actions">' +
-          '<button class="btn" ' + (past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')">' + (past ? t('past') : (full ? 'В резерв' : t('signup'))) + '</button>' +
+          '<button type="button" class="btn" id="signupToggle-' + e.id + '" aria-controls="signup-' + e.id + '" aria-expanded="false" ' + (past ? 'disabled' : '') + ' onclick="toggleSignup(' + e.id + ')">' + (past ? t('past') : (full ? t('waitlist_btn') : t('signup'))) + '</button>' +
           '<button class="btn-ghost btn-small" onclick="shareEvent(' + e.id + ')">' + uiIcon('link') + ' ' + t('share') + '</button>' +
           '<button class="btn-wa btn-small" onclick="shareWA(' + e.id + ')">' + t('wa_btn') + '</button>' +
           '<button class="btn-tg btn-small" onclick="shareTG(' + e.id + ')">' + t('tg_btn') + '</button>' +
           '<button class="btn-cal btn-small" onclick="downloadICS(' + e.id + ')">' + uiIcon('calendar') + ' ' + t('cal_btn') + '</button>' +
         '</div>' +
-        '<div class="signup-form" id="signup-' + e.id + '">' +
-          '<input placeholder="' + escAttr(t('your_name')) + '" id="name-' + e.id + '" aria-label="' + t('your_name') + '">' +
-          '<input placeholder="' + escAttr(t('email_phone')) + '" id="contact-' + e.id + '" aria-label="' + t('email_phone') + '">' +
-          '<button class="btn btn-small" id="signupBtn-' + e.id + '" onclick="doSignup(' + e.id + ')">' + t('confirm') + '</button>' +
-          '<span id="signupMsg-' + e.id + '"></span>' +
-        '</div>' +
+        '<form class="signup-form" id="signup-' + e.id + '" onsubmit="doSignup(' + e.id + ', event)">' +
+          '<label for="name-' + e.id + '">' + esc(t('your_name')) + '</label>' +
+          '<input placeholder="' + escAttr(t('your_name')) + '" id="name-' + e.id + '" autocomplete="name" maxlength="120" required>' +
+          '<label for="contact-' + e.id + '">' + esc(t('email_phone')) + '</label>' +
+          '<input placeholder="' + escAttr(t('email_phone')) + '" id="contact-' + e.id + '" autocomplete="email" maxlength="160" required>' +
+          '<button type="submit" class="btn btn-small" id="signupBtn-' + e.id + '">' + t('confirm') + '</button>' +
+          '<span id="signupMsg-' + e.id + '" role="status" aria-live="polite"></span>' +
+        '</form>' +
       '</div>';
     }).join('');
   }
@@ -653,16 +662,17 @@ function renderTop() {
 
 function render() { renderStats(); renderImpact(); renderFilters(); renderEvents(); renderDash(); renderTop(); }
 
-function toggleSignup(id) { document.getElementById('signup-' + id).classList.toggle('open'); }
+function toggleSignup(id) { var form = document.getElementById('signup-' + id), button = document.getElementById('signupToggle-' + id); var open = form.classList.toggle('open'); if (button) button.setAttribute('aria-expanded', String(open)); if (open) document.getElementById('name-' + id).focus(); }
 
 async function checkInSignup(eventId,signupId){var resp=await supabase.from('signups').update({checked_in_at:new Date().toISOString()}).eq('id',signupId);if(resp.error){alert('Check-in unavailable: apply the database migration first.');return;}var ev=EVENTS.find(function(e){return e.id===eventId;}),s=ev&&ev.signups.find(function(x){return x.id===signupId;});if(s){s.checked_in_at=new Date().toISOString();var code=await issueCertificate(s);if(code)alert('Сертификат выдан: '+certificateUrl(code));}renderDash();}
-function showCheckinQR(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var url=location.origin+location.pathname+'?checkin='+eventId;document.getElementById('qrTitle').textContent=ci('qr')+': '+ev.title;document.getElementById('qrImage').src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(url);document.getElementById('qrLink').textContent=url;document.getElementById('qrLink').href=url;document.getElementById('qrDialog').showModal();}
+function showCheckinQR(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var url=location.origin+location.pathname+'?checkin='+eventId,img=document.getElementById('qrImage');document.getElementById('qrTitle').textContent=ci('qr')+': '+ev.title;img.hidden=false;img.onerror=function(){img.hidden=true;};img.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(url);document.getElementById('qrLink').textContent=url;document.getElementById('qrLink').href=url;document.getElementById('qrDialog').showModal();}
 function closeQR(){document.getElementById('qrDialog').close();}
 function copyReminder(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var text='Напоминание: «'+ev.title+'» — '+fmtDate(ev.date)+', '+ev.city+'. Пожалуйста, подтвердите участие и отметьтесь на площадке через QR-код.';navigator.clipboard.writeText(text).then(function(){alert(ci('reminder_ok'));});}
 function renderCheckinGate(){var eventId=Number(new URLSearchParams(location.search).get('checkin')),gate=document.getElementById('checkinGate');if(!eventId||!gate)return;var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;gate.classList.remove('hidden');gate.innerHTML='<div class="checkin-gate"><div><p class="checkin-kicker">'+ci('checkin_title')+'</p><h2>'+esc(ev.title)+'</h2><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p></div><div class="checkin-form"><label>'+ci('checkin_hint')+'</label><input id="checkinContact" type="text" placeholder="Email или телефон"><button class="btn" onclick="selfCheckIn('+ev.id+')">'+ci('checkin')+'</button><div id="checkinMsg"></div></div></div>';}
 async function selfCheckIn(eventId){var contact=(document.getElementById('checkinContact').value||'').trim().toLowerCase(),ev=EVENTS.find(function(e){return e.id===eventId;}),signup=ev&&ev.signups.find(function(s){return String(s.contact).trim().toLowerCase()===contact;}),msg=document.getElementById('checkinMsg');if(!signup){msg.textContent=ci('checkin_fail');msg.className='msg msg-err';return;}var resp=await supabase.from('signups').update({checked_in_at:new Date().toISOString()}).eq('id',signup.id);if(resp.error){msg.textContent='Check-in unavailable: apply the database migration first.';msg.className='msg msg-err';return;}signup.checked_in_at=new Date().toISOString();await issueCertificate(signup);msg.textContent=ci('checkin_done');msg.className='msg msg-ok';}
 
-async function doSignup(id) {
+async function doSignup(id, submitEvent) {
+  if (submitEvent) submitEvent.preventDefault();
   var btn = document.getElementById('signupBtn-' + id);
   var name = document.getElementById('name-' + id).value.trim();
   var contact = document.getElementById('contact-' + id).value.trim();
@@ -678,7 +688,7 @@ async function doSignup(id) {
     var resp = await supabase.from('signups').insert({event_id: id, name: name, contact: contact, status: signupStatus}).select();
     if (resp.error) { showMsg('signupMsg-' + id, resp.error.message, true); return; }
     var certHtml = '<button class="btn btn-cert" data-id="' + id + '" data-name="' + escAttr(name) + '" onclick="genCert(this.dataset.id, this.dataset.name)">' + uiIcon('award') + ' ' + t('cert_btn') + '</button>';
-    document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + (signupStatus === 'waitlist' ? 'Вы в резервном списке. Освободившееся место будет предложено автоматически.' : t('signed_up')) + '</span> ' + (signupStatus === 'waitlist' ? '' : certHtml);
+    document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + (signupStatus === 'waitlist' ? t('waitlist_ok') : t('signed_up')) + '</span> ' + (signupStatus === 'waitlist' ? '' : certHtml);
     confetti();
     document.getElementById('name-' + id).value = '';
     document.getElementById('contact-' + id).value = '';
@@ -1021,7 +1031,7 @@ function doSearch() {
 async function loadEvents() {
   try {
     var resp = await supabase.from('events').select('*, signups(id,name,contact)').order('date', {ascending: true});
-    if (resp.error) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + t('load_err') + ': ' + resp.error.message + '</p></div>'; return; }
+    if (resp.error) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + esc(t('load_err') + ': ' + resp.error.message) + '</p></div>'; return; }
     EVENTS = resp.data || [];
     var extras = await Promise.all([supabase.from('signups').select('id,status'), supabase.from('signups').select('id,checked_in_at,certificate_code')]);
     var statuses = extras[0];
