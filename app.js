@@ -1074,9 +1074,15 @@ function init() {
   if (me) { document.getElementById('ppContact').value = me; }
   setLangStatic();
   initAuth().then(function() {
-    loadEvents();
+    var loading = loadEvents();
     if (isCoord) {
       document.getElementById('addEventSection').classList.remove('hidden');
+      if (new URLSearchParams(location.search).get('coordinator') === '1') loading.then(function() {
+        var dash = document.getElementById('dashboard');
+        dash.classList.remove('hidden');
+        dash.scrollIntoView({behavior:'smooth', block:'start'});
+        history.replaceState(null, '', location.pathname + '#dashboard');
+      });
     }
   });
   if (me) setTimeout(function() { lookupPassport(null); }, 800);
