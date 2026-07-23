@@ -77,14 +77,37 @@ drop policy if exists "read coordinator_requests" on coordinator_requests;
 create policy "coordinator reads own request" on coordinator_requests for select to authenticated
 using (email = (auth.jwt() ->> 'email'));
 -- WAITLIST v1: автоматический резервный список.
-alter table signups add column if not exists status text not null default 'confirmed' check (status in ('confirmed', 'waitlist'));
+alter table events add column if not exists default_hours numeric(5,2) not null default 3 check (default_hours >= 0.5 and default_hours <= 24);
+alter table signups add column if not exists volunteer_hours numeric(5,2) check (volunteer_hours >= 0.5 and volunteer_hours <= 24);
+alter table signups add column if not exists status text not null default 'confirmed';
+alter table signups drop constraint if exists signups_status_check;
+alter table signups add constraint signups_status_check check (status in ('confirmed', 'waitlist', 'no_show'));
 create or replace function promote_waitlist_after_cancel() returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  vacancy_event_id bigint;
 begin
-  if old.status = 'confirmed' then
-    update signups set status = 'confirmed' where id = (select id from signups where event_id = old.event_id and status = 'waitlist' order by created_at asc limit 1);
+  if tg_op = 'DELETE' and old.status = 'confirmed' then
+    vacancy_event_id := old.event_id;
+  elsif tg_op = 'UPDATE' and old.status = 'confirmed' and new.status = 'no_show' then
+    vacancy_event_id := old.event_id;
   end if;
-  return old;
+  if vacancy_event_id is not null then
+    update signups set status = 'confirmed' where id = (select id from signups where event_id = vacancy_event_id and status = 'waitlist' order by created_at asc limit 1);
+  end if;
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
 end;
 $$;
 drop trigger if exists promote_waitlist_after_cancel on signups;
 create trigger promote_waitlist_after_cancel after delete on signups for each row execute function promote_waitlist_after_cancel();
+drop trigger if exists promote_waitlist_after_no_show on signups;
+create trigger promote_waitlist_after_no_show after update of status on signups for each row execute function promote_waitlist_after_cancel();
+
+-- Approved coordinators can maintain events as well as publish them.
+drop policy if exists "coordinator updates events" on events;
+create policy "coordinator updates events" on events for update to authenticated
+using (exists (select 1 from coordinator_requests where email = (auth.jwt() ->> 'email') and approved = true))
+with check (exists (select 1 from coordinator_requests where email = (auth.jwt() ->> 'email') and approved = true));
+drop policy if exists "coordinator deletes events" on events;
+create policy "coordinator deletes events" on events for delete to authenticated
+using (exists (select 1 from coordinator_requests where email = (auth.jwt() ->> 'email') and approved = true));

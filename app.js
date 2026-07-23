@@ -76,6 +76,7 @@ var T = {
     email_phone: 'Email или телефон',
     confirm: 'Подтвердить',
     signed_up: 'Вы записаны!',
+    cert_after_attendance: 'Сертификат появится после подтверждения участия координатором.',
     waitlist_btn: 'В резерв',
     waitlist_ok: 'Вы в резервном списке. Освободившееся место будет предложено автоматически.',
     feedback_ok: 'Спасибо за отзыв!',
@@ -212,6 +213,7 @@ var T = {
     email_phone: 'Email немесе телефон',
     confirm: 'Растау',
     signed_up: 'Сіз тіркелдіңіз!',
+    cert_after_attendance: 'Сертификат қатысуды үйлестіруші растағаннан кейін пайда болады.',
     waitlist_btn: 'Резервке тұру',
     waitlist_ok: 'Сіз резервтік тізімдесіз. Бос орын пайда болса, ол автоматты түрде ұсынылады.',
     feedback_ok: 'Пікіріңізге рахмет!',
@@ -348,6 +350,7 @@ var T = {
     email_phone: 'Email or phone',
     confirm: 'Confirm',
     signed_up: 'You are signed up!',
+    cert_after_attendance: 'Your certificate will appear after the coordinator verifies attendance.',
     waitlist_btn: 'Join waitlist',
     waitlist_ok: 'You are on the waitlist. An available spot will be offered automatically.',
     feedback_ok: 'Thank you for your feedback!',
@@ -508,8 +511,8 @@ function categoryIcon(cat) {
 
 function renderStats() {
   var total = EVENTS.length;
-  var signed = EVENTS.reduce(function(s, e) { return s + e.signups.length; }, 0);
-  var free = EVENTS.reduce(function(s, e) { return s + Math.max(0, (e.spots || 0) - e.signups.length); }, 0);
+  var signed = EVENTS.reduce(function(s, e) { return s + e.signups.filter(isConfirmed).length; }, 0);
+  var free = EVENTS.reduce(function(s, e) { return s + Math.max(0, (e.spots || 0) - e.signups.filter(isConfirmed).length); }, 0);
   document.getElementById('stats').innerHTML =
     '<div class="stat-item"><b>' + total + '</b><span>' + t('events_count') + '</span></div>' +
     '<div class="stat-item"><b>' + signed + '</b><span>' + t('volunteers') + '</span></div>' +
@@ -517,8 +520,10 @@ function renderStats() {
 }
 
 function renderImpact() {
-  var hours = EVENTS.reduce(function(s, e) { return s + e.signups.length * 3; }, 0);
-  var people = Object.keys(EVENTS.reduce(function(acc, e) { e.signups.forEach(function(s) { acc[s.contact] = 1; }); return acc; }, {})).length;
+  var attended = [];
+  EVENTS.forEach(function(e) { e.signups.forEach(function(s) { if (s.checked_in_at) attended.push(s); }); });
+  var hours = attended.reduce(function(sum, s) { return sum + verifiedHours(s); }, 0);
+  var people = Object.keys(attended.reduce(function(acc, s) { acc[String(s.contact).trim().toLowerCase()] = 1; return acc; }, {})).length;
   var events = EVENTS.length;
   var cities = Object.keys(EVENTS.reduce(function(acc, e) { acc[e.city] = 1; return acc; }, {})).length;
   document.getElementById('impact').innerHTML =
@@ -541,6 +546,10 @@ function openAuth(tab) {
   if (!dialog.open) dialog.showModal();
   setTimeout(function() { document.getElementById(tab === 'register' ? 'coordRegEmail' : 'coordEmail').focus(); }, 30);
 }
+
+function isConfirmed(signup) { return !signup.status || signup.status === 'confirmed'; }
+function verifiedHours(signup) { return signup && signup.checked_in_at ? Number(signup.volunteer_hours || 0) : 0; }
+function formatHours(value) { var n = Number(value || 0); return Number.isInteger(n) ? String(n) : n.toFixed(1); }
 function closeAuth() { var dialog = document.getElementById('authDialog'); if (dialog && dialog.open) dialog.close(); }
 function renderListing(withFilters) { if (withFilters) renderFilters(); renderEvents(); }
 function setCity(i) { CITY = CITIES[i]; renderListing(true); }
@@ -641,21 +650,32 @@ function renderDash() {
   dashBtn.classList.toggle('hidden', !isCoord);
   if (!isCoord) { dash.classList.add('hidden'); return; }
   var all = []; EVENTS.forEach(function(e) { e.signups.forEach(function(s) { all.push({event:e, signup:s}); }); });
-  var confirmed = all.filter(function(x) { return !x.signup.status || x.signup.status === 'confirmed'; });
+  var confirmed = all.filter(function(x) { return isConfirmed(x.signup); });
   var waiting = all.filter(function(x) { return x.signup.status === 'waitlist'; });
+  var noShows = all.filter(function(x) { return x.signup.status === 'no_show'; });
   var checked = confirmed.filter(function(x) { return !!x.signup.checked_in_at; });
+  var verifiedTotal = checked.reduce(function(sum, x) { return sum + verifiedHours(x.signup); }, 0);
   var totalSpots = EVENTS.reduce(function(sum, e) { return sum + Number(e.spots || 0); }, 0);
   var fill = totalSpots ? Math.round(confirmed.length / totalSpots * 100) : 0;
   var attendance = confirmed.length ? Math.round(checked.length / confirmed.length * 100) : 0;
   var upcoming = EVENTS.filter(function(e) { return e.date >= today; }).sort(function(a,b) { return a.date.localeCompare(b.date); });
-  var risks = upcoming.filter(function(e) { return e.signups.filter(function(s) { return !s.status || s.status === 'confirmed'; }).length / Math.max(1, e.spots) < .55; }).slice(0, 3);
+  var risks = upcoming.filter(function(e) { return e.signups.filter(isConfirmed).length / Math.max(1, e.spots) < .55; }).slice(0, 3);
   var html = '<div class="coord-shell"><div class="coord-topline"><div><p>Кабинет координатора</p><h2>Волонтёрская программа</h2></div><div class="coord-actions"><button class="btn btn-outline btn-small" onclick="copyReport()">Скопировать отчёт</button><button class="btn btn-outline btn-small" onclick="logoutCoord()">' + t('logout') + '</button></div></div>';
-  html += '<div class="coord-kpi-grid"><div class="coord-kpi"><span>Подтверждённые записи</span><b>' + confirmed.length + '</b><small>из ' + totalSpots + ' мест</small></div><div class="coord-kpi"><span>Средняя загрузка</span><b>' + fill + '%</b><small>' + EVENTS.length + ' событий</small></div><div class="coord-kpi"><span>Резервный список</span><b>' + waiting.length + '</b><small>ожидают место</small></div><div class="coord-kpi"><span>Подтверждённый check-in</span><b>' + checked.length + '</b><small>' + (checked.length * 3) + ' волонтёрских часов</small></div></div>';
+  html += '<div class="coord-kpi-grid"><div class="coord-kpi"><span>Подтверждённые записи</span><b>' + confirmed.length + '</b><small>из ' + totalSpots + ' мест</small></div><div class="coord-kpi"><span>Средняя загрузка</span><b>' + fill + '%</b><small>' + EVENTS.length + ' событий</small></div><div class="coord-kpi"><span>Резервный список</span><b>' + waiting.length + '</b><small>' + noShows.length + ' no-show</small></div><div class="coord-kpi"><span>Проверенный impact</span><b>' + formatHours(verifiedTotal) + ' ч</b><small>' + checked.length + ' участников с check-in</small></div></div>';
   html += '<div class="coord-grid"><section class="coord-panel"><h3>Загрузка ближайших событий</h3><p>Сразу видно, где нужен дополнительный набор.</p>';
-  if (upcoming.length) html += upcoming.slice(0,5).map(function(e) { var used = e.signups.filter(function(s) { return !s.status || s.status === 'confirmed'; }).length, pct = Math.min(100, Math.round(used / Math.max(1,e.spots) * 100)); return '<div class="load-row"><div><b>' + esc(e.title) + '</b><span>' + esc(e.city) + ' · ' + fmtDate(e.date) + '</span></div><div class="load-track"><i style="width:' + pct + '%"></i></div><strong>' + used + '/' + e.spots + '</strong></div>'; }).join(''); else html += '<p>Пока нет будущих событий.</p>';
+  if (upcoming.length) html += upcoming.slice(0,5).map(function(e) { var used = e.signups.filter(isConfirmed).length, pct = Math.min(100, Math.round(used / Math.max(1,e.spots) * 100)); return '<div class="load-row"><div><b>' + esc(e.title) + '</b><span>' + esc(e.city) + ' · ' + fmtDate(e.date) + '</span></div><div class="load-track"><i style="width:' + pct + '%"></i></div><strong>' + used + '/' + e.spots + '</strong></div>'; }).join(''); else html += '<p>Пока нет будущих событий.</p>';
   html += '</section><section class="coord-panel"><h3>Посещаемость</h3><p>По отметкам на площадке.</p><div class="attendance"><div class="attendance-ring" style="--attendance:' + attendance + '%"><b>' + attendance + '%</b></div><div class="attendance-copy"><b>' + checked.length + '</b><span>отметились из ' + confirmed.length + ' подтверждённых</span></div></div></section></div>';
-  if (risks.length) html += '<section class="coord-risk"><h3>Требуют внимания</h3>' + risks.map(function(e) { var used=e.signups.filter(function(s){return !s.status||s.status==='confirmed';}).length; return '<div class="coord-risk-row"><div><strong>' + esc(e.title) + '</strong><small>' + fmtDate(e.date) + ' · ' + esc(e.city) + '</small></div><b>' + used + '/' + e.spots + ' мест</b></div>'; }).join('') + '</section>';
-  html += '<div class="coord-event-list">' + EVENTS.map(function(e) { var eventConfirmed=e.signups.filter(function(s){return !s.status||s.status==='confirmed';}), eventWait=e.signups.filter(function(s){return s.status==='waitlist';}), eventFill=Math.round(eventConfirmed.length/Math.max(1,e.spots)*100); return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (eventConfirmed.length ? '<table><tr><th>' + t('name_hdr') + '</th><th>' + t('contact_hdr') + '</th><th>Статус</th></tr>' + eventConfirmed.slice(0,8).map(function(s){var done=!!s.checked_in_at;return '<tr><td>' + esc(s.name) + '</td><td>' + esc(s.contact) + '</td><td>' + (done ? '<span class="coord-status">Отмечен</span>' : '<button class="btn btn-small" onclick="checkInSignup(' + e.id + ',' + s.id + ')">Check-in</button>') + '</td></tr>';}).join('') + '</table>' : '<p>Пока нет подтверждённых участников.</p>') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button></div></article>'; }).join('') + '</div></div>';
+  if (risks.length) html += '<section class="coord-risk"><h3>Требуют внимания</h3>' + risks.map(function(e) { var used=e.signups.filter(isConfirmed).length; return '<div class="coord-risk-row"><div><strong>' + esc(e.title) + '</strong><small>' + fmtDate(e.date) + ' · ' + esc(e.city) + '</small></div><b>' + used + '/' + e.spots + ' мест</b></div>'; }).join('') + '</section>';
+  html += '<div class="coord-event-list">' + EVENTS.map(function(e) {
+    var eventConfirmed=e.signups.filter(isConfirmed), eventWait=e.signups.filter(function(s){return s.status==='waitlist';}), eventNoShow=e.signups.filter(function(s){return s.status==='no_show';}), eventFill=Math.round(eventConfirmed.length/Math.max(1,e.spots)*100);
+    var rows = eventConfirmed.map(function(s){
+      var done=!!s.checked_in_at, hours=done ? verifiedHours(s) : Number(e.default_hours || 3);
+      var cert = done && s.certificate_code ? '<a class="coord-cert-link" href="' + escAttr(certificateUrl(s.certificate_code)) + '" target="_blank">Сертификат</a>' : '';
+      return '<tr><td><b>' + esc(s.name) + '</b><small class="coord-person-meta">' + esc(s.contact) + '</small></td><td><label class="hours-control"><input id="hours-' + s.id + '" type="number" min="0.5" max="24" step="0.5" value="' + hours + '"><span>ч</span></label></td><td><div class="row-actions"><button class="btn btn-small" onclick="checkInSignup(' + e.id + ',' + s.id + ')">' + (done ? 'Обновить часы' : 'Подтвердить') + '</button>' + (!done ? '<button class="btn btn-outline btn-small" onclick="markNoShow(' + e.id + ',' + s.id + ')">No-show</button>' : '') + cert + '</div></td></tr>';
+    }).join('');
+    var waitRows = eventWait.map(function(s){return '<li><span><b>'+esc(s.name)+'</b><small>'+esc(s.contact)+'</small></span><button class="btn btn-outline btn-small" onclick="promoteWaitlist(' + e.id + ',' + s.id + ')">Дать место</button></li>';}).join('');
+    return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест · план ' + formatHours(e.default_hours || 3) + ' ч</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (rows ? '<div class="coord-table-wrap"><table class="attendance-table"><tr><th>Участник</th><th>Часы</th><th>Attendance</th></tr>' + rows + '</table></div>' : '<p>Пока нет подтверждённых участников.</p>') + (waitRows ? '<div class="waitlist-block"><h4>Резерв — следующий автоматически получает место при no-show</h4><ul>' + waitRows + '</ul></div>' : '') + (eventNoShow.length ? '<p class="no-show-note">No-show: ' + eventNoShow.length + '</p>' : '') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button><button class="btn btn-outline btn-small" onclick="startEdit(' + e.id + ')">Изменить</button></div></article>';
+  }).join('') + '</div></div>';
   dash.innerHTML = html;
 }
 
@@ -686,12 +706,35 @@ function render() { renderStats(); renderImpact(); renderFilters(); renderEvents
 
 function toggleSignup(id) { var form = document.getElementById('signup-' + id), button = document.getElementById('signupToggle-' + id); var open = form.classList.toggle('open'); if (button) button.setAttribute('aria-expanded', String(open)); if (open) document.getElementById('name-' + id).focus(); }
 
-async function checkInSignup(eventId,signupId){var resp=await supabase.from('signups').update({checked_in_at:new Date().toISOString()}).eq('id',signupId);if(resp.error){alert('Check-in unavailable: apply the database migration first.');return;}var ev=EVENTS.find(function(e){return e.id===eventId;}),s=ev&&ev.signups.find(function(x){return x.id===signupId;});if(s){s.checked_in_at=new Date().toISOString();var code=await issueCertificate(s);if(code)alert('Сертификат выдан: '+certificateUrl(code));}renderDash();}
+async function checkInSignup(eventId,signupId){
+  var ev=EVENTS.find(function(e){return e.id===eventId;}),s=ev&&ev.signups.find(function(x){return x.id===signupId;}),input=document.getElementById('hours-'+signupId),hours=Number(input&&input.value);
+  if(!s||!hours||hours<0.5||hours>24){alert('Укажите фактические часы от 0.5 до 24.');return;}
+  var checkedAt=s.checked_in_at||new Date().toISOString();
+  var resp=await supabase.from('signups').update({checked_in_at:checkedAt,volunteer_hours:hours}).eq('id',signupId);
+  if(resp.error){alert('Check-in unavailable: apply the database migration first.');return;}
+  s.checked_in_at=checkedAt;s.volunteer_hours=hours;
+  var code=await issueCertificate(s);
+  render();
+  if(code) alert('Участие подтверждено на '+formatHours(hours)+' ч. Сертификат готов: '+certificateUrl(code));
+}
+async function markNoShow(eventId,signupId){
+  if(!confirm('Отметить участника как no-show? Первому человеку из резерва автоматически будет предложено место.'))return;
+  var resp=await supabase.from('signups').update({status:'no_show',checked_in_at:null,volunteer_hours:null,certificate_code:null,certificate_issued_at:null}).eq('id',signupId);
+  if(resp.error){alert('Не удалось отметить no-show: '+resp.error.message);return;}
+  await loadEvents();
+}
+async function promoteWaitlist(eventId,signupId){
+  var ev=EVENTS.find(function(e){return e.id===eventId;}),confirmed=ev?ev.signups.filter(isConfirmed).length:0;
+  if(ev&&confirmed>=ev.spots&&!confirm('Событие уже заполнено. Всё равно дать место этому участнику?'))return;
+  var resp=await supabase.from('signups').update({status:'confirmed'}).eq('id',signupId);
+  if(resp.error){alert('Не удалось перевести из резерва: '+resp.error.message);return;}
+  await loadEvents();
+}
 function showCheckinQR(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var url=location.origin+location.pathname+'?checkin='+eventId,img=document.getElementById('qrImage');document.getElementById('qrTitle').textContent=ci('qr')+': '+ev.title;img.hidden=false;img.onerror=function(){img.hidden=true;};img.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(url);document.getElementById('qrLink').textContent=url;document.getElementById('qrLink').href=url;document.getElementById('qrDialog').showModal();}
 function closeQR(){document.getElementById('qrDialog').close();}
 function copyReminder(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var text='Напоминание: «'+ev.title+'» — '+fmtDate(ev.date)+', '+ev.city+'. Пожалуйста, подтвердите участие и отметьтесь на площадке через QR-код.';navigator.clipboard.writeText(text).then(function(){alert(ci('reminder_ok'));});}
 function renderCheckinGate(){var eventId=Number(new URLSearchParams(location.search).get('checkin')),gate=document.getElementById('checkinGate');if(!eventId||!gate)return;var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;gate.classList.remove('hidden');gate.innerHTML='<div class="checkin-gate"><div><p class="checkin-kicker">'+ci('checkin_title')+'</p><h2>'+esc(ev.title)+'</h2><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p></div><div class="checkin-form"><label>'+ci('checkin_hint')+'</label><input id="checkinContact" type="text" placeholder="Email или телефон"><button class="btn" onclick="selfCheckIn('+ev.id+')">'+ci('checkin')+'</button><div id="checkinMsg"></div></div></div>';}
-async function selfCheckIn(eventId){var contact=(document.getElementById('checkinContact').value||'').trim().toLowerCase(),ev=EVENTS.find(function(e){return e.id===eventId;}),signup=ev&&ev.signups.find(function(s){return String(s.contact).trim().toLowerCase()===contact;}),msg=document.getElementById('checkinMsg');if(!signup){msg.textContent=ci('checkin_fail');msg.className='msg msg-err';return;}var resp=await supabase.from('signups').update({checked_in_at:new Date().toISOString()}).eq('id',signup.id);if(resp.error){msg.textContent='Check-in unavailable: apply the database migration first.';msg.className='msg msg-err';return;}signup.checked_in_at=new Date().toISOString();await issueCertificate(signup);msg.textContent=ci('checkin_done');msg.className='msg msg-ok';}
+async function selfCheckIn(eventId){var contact=(document.getElementById('checkinContact').value||'').trim().toLowerCase(),ev=EVENTS.find(function(e){return e.id===eventId;}),signup=ev&&ev.signups.find(function(s){return String(s.contact).trim().toLowerCase()===contact&&isConfirmed(s);}),msg=document.getElementById('checkinMsg');if(!signup){msg.textContent=ci('checkin_fail');msg.className='msg msg-err';return;}msg.textContent='Регистрация найдена. Покажите экран координатору: он подтвердит attendance и фактические часы.';msg.className='msg msg-ok';}
 
 async function doSignup(id, submitEvent) {
   if (submitEvent) submitEvent.preventDefault();
@@ -709,8 +752,7 @@ async function doSignup(id, submitEvent) {
     var signupStatus = ev && confirmedCount >= ev.spots ? 'waitlist' : 'confirmed';
     var resp = await supabase.from('signups').insert({event_id: id, name: name, contact: contact, status: signupStatus}).select();
     if (resp.error) { showMsg('signupMsg-' + id, resp.error.message, true); return; }
-    var certHtml = '<button class="btn btn-cert" data-id="' + id + '" data-name="' + escAttr(name) + '" onclick="genCert(this.dataset.id, this.dataset.name)">' + uiIcon('award') + ' ' + t('cert_btn') + '</button>';
-    document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + (signupStatus === 'waitlist' ? t('waitlist_ok') : t('signed_up')) + '</span> ' + (signupStatus === 'waitlist' ? '' : certHtml);
+    document.getElementById('signupMsg-' + id).innerHTML = '<span class="msg msg-ok">' + (signupStatus === 'waitlist' ? t('waitlist_ok') : t('signed_up') + ' ' + t('cert_after_attendance')) + '</span>';
     confetti();
     document.getElementById('name-' + id).value = '';
     document.getElementById('contact-' + id).value = '';
@@ -808,6 +850,7 @@ function startEdit(id) {
   document.getElementById('evCategory').value = ev.category;
   document.getElementById('evDesc').value = ev.description;
   document.getElementById('evSpots').value = ev.spots;
+  document.getElementById('evHours').value = ev.default_hours || 3;
   document.getElementById('lang-add-title').textContent = t('edit_btn');
   document.getElementById('lang-btn-add').textContent = t('save_btn');
   document.getElementById('addEventSection').classList.remove('hidden');
@@ -833,7 +876,8 @@ async function addEvent(e) {
       date: document.getElementById('evDate').value,
       category: document.getElementById('evCategory').value,
       description: document.getElementById('evDesc').value.trim(),
-      spots: parseInt(document.getElementById('evSpots').value) || 20
+      spots: parseInt(document.getElementById('evSpots').value) || 20,
+      default_hours: Number(document.getElementById('evHours').value) || 3
     };
     var resp;
     if (editingId) {
@@ -902,24 +946,27 @@ async function lookupPassport(e) {
   setElementDisabled(btn, true);
   try {
     await loadEvents();
-    var mine = EVENTS.filter(function(e) { return e.signups.some(function(s) { return s.contact.toLowerCase().trim() === contact; }); });
+    var mine = [];
+    EVENTS.forEach(function(eventItem) { eventItem.signups.forEach(function(signup) { if (String(signup.contact).toLowerCase().trim() === contact) mine.push({event:eventItem,signup:signup}); }); });
     var html = '';
     if (!mine.length) {
       html = '<div class="card empty"><div class="empty-icon">' + uiIcon('leaf') + '</div><h3>' + t('empty_passport') + '</h3></div>';
     } else {
-      var hours = mine.length * 3;
-      var level = mine.length < 3 ? 1 : mine.length < 5 ? 2 : 3;
+      var completed = mine.filter(function(x) { return !!x.signup.checked_in_at; });
+      var hours = completed.reduce(function(sum,x){return sum+verifiedHours(x.signup);},0);
+      var level = completed.length < 3 ? 1 : completed.length < 5 ? 2 : 3;
       var levelKey = level === 1 ? 'level_1' : level === 2 ? 'level_2' : 'level_3';
       var levelIcon = level === 1 ? 'leaf' : level === 2 ? 'users' : 'award';
-      var next = level === 1 ? 3 - mine.length : level === 2 ? 5 - mine.length : 0;
-      html += '<div class="card level-card"><div class="level-icon">' + uiIcon(levelIcon) + '</div><h3>' + t(levelKey) + '</h3><p><b>' + mine.length + '</b> ' + t('events_count') + ' \u00b7 <b>' + hours + '</b> ' + t('passport_hours') + '</p>';
-      if (next > 0) html += '<div class="progress"><div class="progress-fill" style="width:' + (mine.length/(mine.length+next)*100) + '%"></div></div><p class="next">' + t('next_level').replace('N', next) + '</p>';
+      var next = level === 1 ? 3 - completed.length : level === 2 ? 5 - completed.length : 0;
+      html += '<div class="card level-card"><div class="level-icon">' + uiIcon(levelIcon) + '</div><h3>' + t(levelKey) + '</h3><p><b>' + completed.length + '</b> подтверждённых событий · <b>' + formatHours(hours) + '</b> ' + t('passport_hours') + '</p>';
+      if (next > 0) html += '<div class="progress"><div class="progress-fill" style="width:' + (completed.length/(completed.length+next)*100) + '%"></div></div><p class="next">' + t('next_level').replace('N', next) + '</p>';
       html += '</div>';
-      html += mine.map(function(e) {
-        return '<div class="card"><h3>' + esc(e.title) + '</h3><p class="meta">' + esc(e.city) + ' \u00b7 ' + fmtDate(e.date) + '</p>' +
-          '<div class="actions">' +
-            '<button class="btn btn-cert" data-id="' + e.id + '" data-name="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="genCert(this.dataset.id, this.dataset.name)">' + uiIcon('award') + ' ' + t('cert_btn') + '</button>' +
-            '<button class="btn btn-outline" data-id="' + e.id + '" data-contact="' + escAttr(document.getElementById('ppContact').value.trim()) + '" onclick="cancelSignup(this.dataset.id, this.dataset.contact)">' + t('cancel_btn') + '</button>' +
+      html += mine.map(function(x) {
+        var eventItem=x.event,signup=x.signup,done=!!signup.checked_in_at,status=signup.status==='waitlist'?'Резерв':signup.status==='no_show'?'No-show':done?'Участие подтверждено · '+formatHours(verifiedHours(signup))+' ч':'Регистрация подтверждена';
+        var certificate=done&&signup.certificate_code?'<a class="btn btn-cert" href="'+escAttr(certificateUrl(signup.certificate_code))+'" target="_blank">'+uiIcon('award')+' '+t('cert_btn')+'</a>':'<span class="certificate-pending">Сертификат после attendance</span>';
+        return '<div class="card"><h3>' + esc(eventItem.title) + '</h3><p class="meta">' + esc(eventItem.city) + ' \u00b7 ' + fmtDate(eventItem.date) + '</p><p class="passport-status">'+esc(status)+'</p>' +
+          '<div class="actions">' + certificate +
+            (!done&&signup.status!=='no_show'?'<button class="btn btn-outline" data-id="' + eventItem.id + '" data-contact="' + escAttr(signup.contact) + '" onclick="cancelSignup(this.dataset.id, this.dataset.contact)">' + t('cancel_btn') + '</button>':'') +
           '</div></div>';
       }).join('');
     }
@@ -969,7 +1016,7 @@ function downloadICS(id) {
 function downloadCSV(id) {
   var ev = EVENTS.find(function(e) { return e.id === id; });
   if (!ev) return;
-  var csv = '\uFEFFName,Contact\r\n' + ev.signups.map(function(s) { return esc(s.name).replace(/,/g, ' ') + ',' + esc(s.contact); }).join('\r\n');
+  var csv = '\uFEFFName,Contact,Status,Checked in,Volunteer hours,Certificate\r\n' + ev.signups.map(function(s) { return [s.name,s.contact,s.status||'confirmed',s.checked_in_at||'',verifiedHours(s)||'',s.certificate_code||''].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(','); }).join('\r\n');
   var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (ev.title || 'event') + '.csv'; a.click();
 }
@@ -986,17 +1033,19 @@ function copyAllContacts() {
   navigator.clipboard.writeText(contacts.join(', ')).then(function() { alert(t('copied') + ' (' + contacts.length + ')'); });
 }
 function copyReport() {
-  var totalSigned = EVENTS.reduce(function(s, e) { return s + e.signups.length; }, 0);
+  var totalSigned = EVENTS.reduce(function(s, e) { return s + e.signups.filter(isConfirmed).length; }, 0);
+  var checked = []; EVENTS.forEach(function(e){e.signups.forEach(function(s){if(s.checked_in_at)checked.push(s);});});
+  var totalHours = checked.reduce(function(sum,s){return sum+verifiedHours(s);},0);
   var totalSpots = EVENTS.reduce(function(s, e) { return s + (e.spots || 0); }, 0);
   var avgFill = totalSpots ? Math.round(totalSigned / totalSpots * 100) : 0;
   var date = new Date().toLocaleDateString(lang === 'kz' ? 'kk-KZ' : lang === 'en' ? 'en-GB' : 'ru-RU');
   var lines = ['# ' + t('report_title') + ' — ' + date, '',
     '| ' + t('title_lbl') + ' | ' + t('city_lbl') + ' | ' + t('signed') + ' | ' + t('spots') + ' | ' + t('fill_rate') + ' |', '|---|---|---|---|---|'];
   EVENTS.forEach(function(e) {
-    var fill = (e.spots || 1) ? Math.round(e.signups.length / (e.spots || 1) * 100) : 0;
-    lines.push('| ' + e.title + ' | ' + e.city + ' | ' + e.signups.length + ' | ' + e.spots + ' | ' + fill + '% |');
+    var count=e.signups.filter(isConfirmed).length, fill = (e.spots || 1) ? Math.round(count / (e.spots || 1) * 100) : 0;
+    lines.push('| ' + e.title + ' | ' + e.city + ' | ' + count + ' | ' + e.spots + ' | ' + fill + '% |');
   });
-  lines.push('', '**' + t('impact_events') + ':** ' + EVENTS.length + ' · **' + t('volunteers') + ':** ' + totalSigned + ' · **' + t('passport_hours') + ':** ' + (totalSigned*3) + ' · **' + t('fill_rate') + ':** ' + avgFill + '%');
+  lines.push('', '**' + t('impact_events') + ':** ' + EVENTS.length + ' · **Регистрации:** ' + totalSigned + ' · **Подтверждено attendance:** ' + checked.length + ' · **' + t('passport_hours') + ':** ' + formatHours(totalHours) + ' · **' + t('fill_rate') + ':** ' + avgFill + '%');
   navigator.clipboard.writeText(lines.join('\n')).then(function() { alert(t('copied')); });
 }
 function genCert(id, name) {
@@ -1031,7 +1080,7 @@ function genCert(id, name) {
 
 function certificateUrl(code){return location.origin+location.pathname+'?certificate='+encodeURIComponent(code);}
 async function issueCertificate(signup){if(signup.certificate_code)return signup.certificate_code;var code=crypto.randomUUID().replace(/-/g,'').slice(0,16).toUpperCase();var resp=await supabase.from('signups').update({certificate_code:code,certificate_issued_at:new Date().toISOString()}).eq('id',signup.id);if(resp.error)return null;signup.certificate_code=code;return code;}
-async function renderCertificateVerification(){var code=new URLSearchParams(location.search).get('certificate'),view=document.getElementById('certificateView');if(!code||!view)return;view.classList.remove('hidden');view.innerHTML='<div class="certificate-shell"><p class="certificate-eyebrow">Volunteer Hub · Verified impact record</p><h1>Проверяем сертификат…</h1></div>';var resp=await supabase.from('signups').select('id,name,event_id,certificate_code,checked_in_at').eq('certificate_code',code).maybeSingle();if(resp.error||!resp.data||!resp.data.checked_in_at){view.innerHTML='<div class="certificate-shell certificate-invalid"><h1>Сертификат не найден</h1><p>Проверьте ссылку или обратитесь к координатору.</p></div>';return;}var signup=resp.data,ev=EVENTS.find(function(e){return e.id===signup.event_id;});if(!ev){view.innerHTML='<div class="certificate-shell certificate-invalid"><h1>Сертификат не найден</h1></div>';return;}view.innerHTML='<div class="certificate-shell"><p class="certificate-eyebrow">Volunteer Hub · Verified impact record</p><div class="certificate-stamp">ПРОВЕРЕНО</div><h1>Сертификат волонтёра</h1><p class="certificate-lead">Подтверждаем участие</p><h2>'+esc(signup.name)+'</h2><p class="certificate-event">в волонтёрском событии «'+esc(ev.title)+'»</p><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p><div class="certificate-code">№ '+esc(signup.certificate_code)+'</div><p class="certificate-note">Участие подтверждено check-in на площадке. Ссылка и код подходят для проверки — печатать сертификат не требуется.</p><div class="actions certificate-actions"><button class="btn" onclick="window.print()">Печать / сохранить PDF</button><button class="btn btn-outline" onclick="navigator.clipboard.writeText(location.href)">Скопировать ссылку</button></div></div>';}
+async function renderCertificateVerification(){var code=new URLSearchParams(location.search).get('certificate'),view=document.getElementById('certificateView');if(!code||!view)return;view.classList.remove('hidden');view.innerHTML='<div class="certificate-shell"><p class="certificate-eyebrow">Volunteer Hub · Verified impact record</p><h1>Проверяем сертификат…</h1></div>';var resp=await supabase.from('signups').select('id,name,event_id,certificate_code,checked_in_at,volunteer_hours').eq('certificate_code',code).maybeSingle();if(resp.error||!resp.data||!resp.data.checked_in_at){view.innerHTML='<div class="certificate-shell certificate-invalid"><h1>Сертификат не найден</h1><p>Проверьте ссылку или обратитесь к координатору.</p></div>';return;}var signup=resp.data,ev=EVENTS.find(function(e){return e.id===signup.event_id;});if(!ev){view.innerHTML='<div class="certificate-shell certificate-invalid"><h1>Сертификат не найден</h1></div>';return;}view.innerHTML='<div class="certificate-shell"><p class="certificate-eyebrow">Volunteer Hub · Verified impact record</p><div class="certificate-stamp">ПРОВЕРЕНО</div><h1>Сертификат волонтёра</h1><p class="certificate-lead">Подтверждаем участие</p><h2>'+esc(signup.name)+'</h2><p class="certificate-event">в волонтёрском событии «'+esc(ev.title)+'»</p><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p><div class="certificate-hours"><b>'+formatHours(signup.volunteer_hours)+'</b><span>подтверждённых волонтёрских часов</span></div><div class="certificate-code">№ '+esc(signup.certificate_code)+'</div><p class="certificate-note">Участие и часы подтверждены координатором после check-in. Ссылка и код подходят для независимой проверки.</p><div class="actions certificate-actions"><button class="btn" onclick="window.print()">Печать / сохранить PDF</button><button class="btn btn-outline" onclick="navigator.clipboard.writeText(location.href)">Скопировать ссылку</button></div></div>';}
 function confetti() {
   var colors = ['#2d6a4f', '#40916c', '#74c69d', '#f9a825', '#e76f51'];
   for (var i = 0; i < 40; i++) {
@@ -1055,11 +1104,11 @@ async function loadEvents() {
     var resp = await supabase.from('events').select('*, signups(id,name,contact)').order('date', {ascending: true});
     if (resp.error) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + esc(t('load_err') + ': ' + resp.error.message) + '</p></div>'; return; }
     EVENTS = resp.data || [];
-    var extras = await Promise.all([supabase.from('signups').select('id,status'), supabase.from('signups').select('id,checked_in_at,certificate_code')]);
+    var extras = await Promise.all([supabase.from('signups').select('id,status'), supabase.from('signups').select('id,checked_in_at,certificate_code,volunteer_hours')]);
     var statuses = extras[0];
     if (!statuses.error) { var byId = {}; statuses.data.forEach(function(s) { byId[s.id] = s.status; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.status = byId[s.id] || 'confirmed'; }); }); }
     var attendance = extras[1];
-    if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] ? seen[s.id].checked_in_at : null; s.certificate_code = seen[s.id] ? seen[s.id].certificate_code : null; }); }); }
+    if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] ? seen[s.id].checked_in_at : null; s.certificate_code = seen[s.id] ? seen[s.id].certificate_code : null; s.volunteer_hours = seen[s.id] ? seen[s.id].volunteer_hours : null; }); }); }
     render();
     if (location.hash) {
       setTimeout(function() {
