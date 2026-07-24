@@ -30,9 +30,9 @@ alter table events enable row level security;
 alter table signups enable row level security;
 alter table feedback enable row level security;
 
-create policy "read events" on events for select to anon using (true);
+create policy "read events" on events for select to anon, authenticated using (true);
 create policy "add event" on events for insert to anon with check (true);
-create policy "read signups" on signups for select to anon using (true);
+create policy "read signups" on signups for select to anon, authenticated using (true);
 create policy "join" on signups for insert to anon with check (true);
 create policy "send feedback" on feedback for insert to anon with check (true);
 
