@@ -23,6 +23,7 @@ check(app.includes("from('signups').insert"), 'signup insert flow exists');
 check(app.includes("from('feedback').insert"), 'feedback insert flow exists');
 check(app.includes('volunteer_hours'), 'verified volunteer hours flow exists');
 check(app.includes("status:'no_show'"), 'no-show flow exists');
+check(app.includes("get('join')") && app.includes('copyRecruitmentLink'), 'direct recruitment link flow exists');
 
 // 4. Static id cross-check (all getElementById ids exist in index.html)
 const idRegex = /getElementById\(['"]([^'"]+)['"]\)/g;

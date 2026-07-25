@@ -15,6 +15,7 @@ var coordEmail = sessionStorage.getItem('coordEmail') || '';
 var isCoord = false;
 var canEdit = true;
 var editingId = null;
+var deepLinkHandled = false;
 var lang = localStorage.getItem('lang') || 'ru';
 var today = new Date().toISOString().slice(0, 10);
 
@@ -72,6 +73,8 @@ var T = {
     few_left: 'Осталось мало мест',
     share: 'Поделиться',
     copied: 'Скопировано',
+    recruit_link: 'Ссылка на набор',
+    recruit_copied: 'Ссылка на набор скопирована',
     your_name: 'Ваше имя',
     email_phone: 'Email или телефон',
     confirm: 'Подтвердить',
@@ -209,6 +212,8 @@ var T = {
     few_left: 'Орын аз қалды',
     share: 'Бөлісу',
     copied: 'Көшірілді',
+    recruit_link: 'Қатысу сілтемесі',
+    recruit_copied: 'Қатысу сілтемесі көшірілді',
     your_name: 'Атыңыз',
     email_phone: 'Email немесе телефон',
     confirm: 'Растау',
@@ -346,6 +351,8 @@ var T = {
     few_left: 'Few spots left',
     share: 'Share',
     copied: 'Copied',
+    recruit_link: 'Recruitment link',
+    recruit_copied: 'Recruitment link copied',
     your_name: 'Your name',
     email_phone: 'Email or phone',
     confirm: 'Confirm',
@@ -674,7 +681,7 @@ function renderDash() {
       return '<tr><td><b>' + esc(s.name) + '</b><small class="coord-person-meta">' + esc(s.contact) + '</small></td><td><label class="hours-control"><input id="hours-' + s.id + '" type="number" min="0.5" max="24" step="0.5" value="' + hours + '"><span>ч</span></label></td><td><div class="row-actions"><button class="btn btn-small" onclick="checkInSignup(' + e.id + ',' + s.id + ')">' + (done ? 'Обновить часы' : 'Подтвердить') + '</button>' + (!done ? '<button class="btn btn-outline btn-small" onclick="markNoShow(' + e.id + ',' + s.id + ')">No-show</button>' : '') + cert + '</div></td></tr>';
     }).join('');
     var waitRows = eventWait.map(function(s){return '<li><span><b>'+esc(s.name)+'</b><small>'+esc(s.contact)+'</small></span><button class="btn btn-outline btn-small" onclick="promoteWaitlist(' + e.id + ',' + s.id + ')">Дать место</button></li>';}).join('');
-    return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест · план ' + formatHours(e.default_hours || 3) + ' ч</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (rows ? '<div class="coord-table-wrap"><table class="attendance-table"><tr><th>Участник</th><th>Часы</th><th>Attendance</th></tr>' + rows + '</table></div>' : '<p>Пока нет подтверждённых участников.</p>') + (waitRows ? '<div class="waitlist-block"><h4>Резерв — следующий автоматически получает место при no-show</h4><ul>' + waitRows + '</ul></div>' : '') + (eventNoShow.length ? '<p class="no-show-note">No-show: ' + eventNoShow.length + '</p>' : '') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button><button class="btn btn-outline btn-small" onclick="startEdit(' + e.id + ')">Изменить</button></div></article>';
+    return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест · план ' + formatHours(e.default_hours || 3) + ' ч</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (rows ? '<div class="coord-table-wrap"><table class="attendance-table"><tr><th>Участник</th><th>Часы</th><th>Attendance</th></tr>' + rows + '</table></div>' : '<p>Пока нет подтверждённых участников.</p>') + (waitRows ? '<div class="waitlist-block"><h4>Резерв — следующий автоматически получает место при no-show</h4><ul>' + waitRows + '</ul></div>' : '') + (eventNoShow.length ? '<p class="no-show-note">No-show: ' + eventNoShow.length + '</p>' : '') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyRecruitmentLink(' + e.id + ')">' + t('recruit_link') + '</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button><button class="btn btn-outline btn-small" onclick="startEdit(' + e.id + ')">Изменить</button></div></article>';
   }).join('') + '</div></div>';
   dash.innerHTML = html;
 }
@@ -990,19 +997,27 @@ async function cancelSignup(id, contact) {
 function shareEvent(id) {
   var ev = EVENTS.find(function(e) { return e.id === id; });
   if (!ev) return;
-  var url = location.origin + location.pathname + '#ev-' + id;
+  var url = recruitmentUrl(id);
   navigator.clipboard.writeText(url).then(function() { alert(t('copied')); });
+}
+function recruitmentUrl(id) {
+  return location.origin + location.pathname + '?join=' + encodeURIComponent(id) + '#ev-' + encodeURIComponent(id);
+}
+function copyRecruitmentLink(id) {
+  var ev = EVENTS.find(function(e) { return e.id === id; });
+  if (!ev) return;
+  navigator.clipboard.writeText(recruitmentUrl(id)).then(function() { alert(t('recruit_copied')); }).catch(function() { alert(t('net_err')); });
 }
 function shareWA(id) {
   var ev = EVENTS.find(function(e) { return e.id === id; });
   if (!ev) return;
-  var url = location.origin + location.pathname + '#ev-' + id;
+  var url = recruitmentUrl(id);
   window.open('https://wa.me/?text=' + encodeURIComponent(ev.title + ' — ' + url), '_blank');
 }
 function shareTG(id) {
   var ev = EVENTS.find(function(e) { return e.id === id; });
   if (!ev) return;
-  var url = encodeURIComponent(location.origin + location.pathname + '#ev-' + id);
+  var url = encodeURIComponent(recruitmentUrl(id));
   window.open('https://t.me/share/url?url=' + url + '&text=' + encodeURIComponent(ev.title), '_blank');
 }
 function downloadICS(id) {
@@ -1109,11 +1124,29 @@ async function loadEvents() {
     if (!statuses.error) { var byId = {}; statuses.data.forEach(function(s) { byId[s.id] = s.status; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.status = byId[s.id] || 'confirmed'; }); }); }
     var attendance = extras[1];
     if (!attendance.error) { var seen = {}; attendance.data.forEach(function(x) { seen[x.id] = x; }); EVENTS.forEach(function(e) { e.signups.forEach(function(s) { s.checked_in_at = seen[s.id] ? seen[s.id].checked_in_at : null; s.certificate_code = seen[s.id] ? seen[s.id].certificate_code : null; s.volunteer_hours = seen[s.id] ? seen[s.id].volunteer_hours : null; }); }); }
+    var joinId = Number(new URLSearchParams(location.search).get('join'));
+    var shouldHandleJoin = !!joinId && !deepLinkHandled && EVENTS.some(function(e) { return e.id === joinId; });
+    if (shouldHandleJoin) { CITY = 'all'; CATEGORY = 'all'; DATE_FILTER = 'all'; SEARCH = ''; }
     render();
-    if (location.hash) {
+    if (shouldHandleJoin || (location.hash && !joinId)) {
+      if (shouldHandleJoin) deepLinkHandled = true;
       setTimeout(function() {
-        var el = document.getElementById(location.hash.slice(1));
-        if (el) { el.scrollIntoView({behavior:'smooth'}); el.classList.add('hl'); }
+        var targetId = shouldHandleJoin ? 'ev-' + joinId : location.hash.slice(1);
+        var el = document.getElementById(targetId);
+        if (!el) return;
+        el.scrollIntoView({behavior:'smooth', block:'center'});
+        el.classList.add('hl');
+        if (shouldHandleJoin) {
+          var ev = EVENTS.find(function(e) { return e.id === joinId; });
+          var form = document.getElementById('signup-' + joinId);
+          var button = document.getElementById('signupToggle-' + joinId);
+          if (ev && ev.date >= today && form) {
+            form.classList.add('open');
+            if (button) button.setAttribute('aria-expanded', 'true');
+            var nameInput = document.getElementById('name-' + joinId);
+            if (nameInput) nameInput.focus({preventScroll:true});
+          }
+        }
       }, 300);
     }
   } catch (err) { document.getElementById('events').innerHTML = '<div class="card"><p class="msg-err">' + t('net_err') + '</p></div>'; }
