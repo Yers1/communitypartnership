@@ -344,7 +344,7 @@ html{background:var(--canvas)}body{background:var(--canvas);color:var(--ink);fon
       </div>
       <div class="filter-group">
         <label id="lang-date-label" for="dateFilter">Дата:</label>
-        <select id="dateFilter" onchange="doDateFilter()">
+        <select id="dateFilter" onchange="setDateFilter()">
           <option value="all">Все</option>
           <option value="future">Будущие</option>
           <option value="past">Прошедшие</option>
@@ -376,14 +376,6 @@ html{background:var(--canvas)}body{background:var(--canvas);color:var(--ink);fon
     <div class="impact-grid" id="impact"></div>
   </section>
 
-  <dialog id="authDialog" class="auth-dialog" aria-labelledby="lang-coord-title">
-    <div id="coordinatorForm" class="auth-card">
-      <div class="auth-dialog-head"><div><p class="auth-kicker">Volunteer Hub</p><h2 id="lang-coord-title">Координатор</h2></div><button class="icon-close" type="button" onclick="closeAuth()" aria-label="Закрыть">×</button></div>
-      <div class="auth-tabs"><button id="tabLogin" class="active" onclick="showAuthTab('login')">Вход</button><button id="tabRegister" onclick="showAuthTab('register')">Регистрация</button></div>
-      <form id="loginForm" class="auth-form active" onsubmit="loginCoord(event)"><label id="lang-lbl-email">Email</label><input id="coordEmail" type="email" autocomplete="email" required><label id="lang-lbl-password">Пароль</label><input id="coordPassword" type="password" autocomplete="current-password" required><div id="loginMsg"></div><button type="submit" class="btn" id="lang-btn-login">Войти</button></form>
-      <form id="registerForm" class="auth-form" onsubmit="registerCoord(event)"><label id="lang-lbl-reg-email">Email</label><input id="coordRegEmail" type="email" autocomplete="email" required><label id="lang-lbl-reg-password">Пароль</label><input id="coordRegPassword" type="password" autocomplete="new-password" minlength="6" required><label id="lang-lbl-reg-password2">Повторите пароль</label><input id="coordRegPassword2" type="password" autocomplete="new-password" minlength="6" required><div id="registerMsg"></div><button type="submit" class="btn" id="lang-btn-register">Зарегистрироваться</button><p class="auth-note" id="lang-reg-note">После регистрации администратор подтвердит вашу заявку.</p></form>
-    </div>
-  </dialog>
   <div id="addEventSection" class="section hidden">
     <div class="card">
       <div class="dash-header">
@@ -433,27 +425,6 @@ html{background:var(--canvas)}body{background:var(--canvas);color:var(--ink);fon
     <div id="topResults"></div>
   </section>
 
-  <section class="section feedback hidden" aria-hidden="true">
-    <h2 class="section-title" id="lang-fb-title">Оставить отзыв о платформе</h2>
-    <form id="feedbackForm" class="card" onsubmit="sendFeedback(event)">
-      <label id="lang-lbl-name">Имя</label>
-      <input id="fbName" required>
-      <label id="lang-lbl-role">Роль</label>
-      <input id="fbRole" placeholder="сотрудник, координатор, волонтёр">
-      <label id="lang-lbl-rating">Оценка</label>
-      <select id="fbRating" required>
-        <option value="5">5: отлично</option>
-        <option value="4">4: хорошо</option>
-        <option value="3">3: средне</option>
-        <option value="2">2: плохо</option>
-        <option value="1">1: очень плохо</option>
-      </select>
-      <label id="lang-lbl-text">Комментарий</label>
-      <textarea id="fbText" required></textarea>
-      <div id="fbMsg"></div>
-      <button type="submit" class="btn" id="lang-btn-send">Отправить</button>
-    </form>
-  </section>
 </main>
 
 <footer id="lang-footer">Employee Volunteer Program: NVS &amp; Zhurekten Zhurekke &middot; 2026</footer>

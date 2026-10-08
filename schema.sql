@@ -103,6 +103,10 @@ create trigger promote_waitlist_after_cancel after delete on signups for each ro
 drop trigger if exists promote_waitlist_after_no_show on signups;
 create trigger promote_waitlist_after_no_show after update of status on signups for each row execute function promote_waitlist_after_cancel();
 
+-- Отмена записи из «Моих записей». ponytail: контакт = идентификация волонтёра, как и при записи; без этой политики delete молча удаляет 0 строк.
+drop policy if exists "cancel signup" on signups;
+create policy "cancel signup" on signups for delete to anon, authenticated using (true);
+
 -- Approved coordinators can maintain events as well as publish them.
 drop policy if exists "coordinator updates events" on events;
 create policy "coordinator updates events" on events for update to authenticated

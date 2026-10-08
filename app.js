@@ -17,7 +17,7 @@ var canEdit = true;
 var editingId = null;
 var deepLinkHandled = false;
 var lang = localStorage.getItem('lang') || 'ru';
-var today = new Date().toISOString().slice(0, 10);
+var today = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10); // local date, not UTC
 
 var T = {
   ru: {
@@ -154,6 +154,14 @@ var T = {
     register_ok: 'Заявка отправлена. Администратор подтвердит доступ.',
     email_exists: 'Этот email уже зарегистрирован.',
     password_match: 'Пароли не совпадают.',
+    cancel_unavail: 'Отмена недоступна. Обратитесь к координатору.',
+    pp_confirmed: 'подтверждённых событий',
+    status_waitlist: 'Резерв',
+    status_no_show: 'Неявка',
+    status_attended: 'Участие подтверждено',
+    status_registered: 'Регистрация подтверждена',
+    cert_pending: 'Сертификат появится после подтверждения участия',
+    h: 'ч',
     cat_Экология: 'Экология', cat_Дети: 'Дети', cat_Образование: 'Образование', cat_Здоровье: 'Здоровье',
     rating_5: '5 — отлично', rating_4: '4 — хорошо', rating_3: '3 — средне', rating_2: '2 — плохо', rating_1: '1 — очень плохо',
     sort_options: 'По дате,По популярности,По местам',
@@ -293,6 +301,14 @@ var T = {
     register_ok: 'Өтінім жіберілді. Әкімшілер қатынамды растайды.',
     email_exists: 'Бұл email тіркелген.',
     password_match: 'Құпия сөздер сәйкес келмейді.',
+    cancel_unavail: 'Болдырмау қолжетімсіз. Координаторға хабарласыңыз.',
+    pp_confirmed: 'расталған іс-шара',
+    status_waitlist: 'Резерв',
+    status_no_show: 'Келмеді',
+    status_attended: 'Қатысу расталды',
+    status_registered: 'Тіркелу расталды',
+    cert_pending: 'Сертификат қатысу расталғаннан кейін пайда болады',
+    h: 'сағ',
     cat_Экология: 'Экология', cat_Дети: 'Балалар', cat_Образование: 'Білім', cat_Здоровье: 'Денсаулық',
     rating_5: '5 — өте жақсы', rating_4: '4 — жақсы', rating_3: '3 — орташа', rating_2: '2 — нашар', rating_1: '1 — өте нашар',
     sort_options: 'Күні бойынша,Танымалдығы бойынша,Орындар бойынша',
@@ -432,6 +448,14 @@ var T = {
     register_ok: 'Request submitted. An administrator will approve access.',
     email_exists: 'This email is already registered.',
     password_match: 'Passwords do not match.',
+    cancel_unavail: 'Cancellation is unavailable. Contact the coordinator.',
+    pp_confirmed: 'verified events',
+    status_waitlist: 'Waitlist',
+    status_no_show: 'No-show',
+    status_attended: 'Attendance verified',
+    status_registered: 'Registration confirmed',
+    cert_pending: 'Certificate appears after attendance is verified',
+    h: 'h',
     cat_Экология: 'Ecology', cat_Дети: 'Children', cat_Образование: 'Education', cat_Здоровье: 'Health',
     rating_5: '5 — excellent', rating_4: '4 — good', rating_3: '3 — average', rating_2: '2 — bad', rating_1: '1 — very bad',
     sort_options: 'By date,By popularity,By spots',
@@ -440,7 +464,7 @@ var T = {
 };
 
 function t(key) { return T[lang][key] || key; }
-function ci(key) { var copy={ru:{checked:'Явка',present:'На месте',checkin:'Отметить',qr:'QR для check-in',reminder:'Скопировать напоминание',reminder_ok:'Напоминание скопировано',checkin_title:'Отметьтесь на месте',checkin_hint:'Введите email или телефон, указанные при записи.',checkin_done:'Вы отмечены. Спасибо за участие!',checkin_fail:'Запись не найдена. Проверьте контакт.',report_present:'Пришло'},kz:{checked:'Қатысу',present:'Келді',checkin:'Белгілеу',qr:'Check-in QR',reminder:'Еске салуды көшіру',reminder_ok:'Еске салу көшірілді',checkin_title:'Қатысқаныңызды растаңыз',checkin_hint:'Тіркелу кезіндегі email не телефонды енгізіңіз.',checkin_done:'Сіз белгілендіңіз. Рақмет!',checkin_fail:'Тіркелу табылмады.',report_present:'Келді'},en:{checked:'Attendance',present:'Present',checkin:'Check in',qr:'Check-in QR',reminder:'Copy reminder',reminder_ok:'Reminder copied',checkin_title:'Check in on site',checkin_hint:'Enter the email or phone used when registering.',checkin_done:'You are checked in. Thank you!',checkin_fail:'Registration not found.',report_present:'Present'}};return(copy[lang]||copy.ru)[key]||key;}
+function ci(key) { var copy={ru:{checked:'Явка',present:'На месте',checkin:'Отметить',qr:'QR для check-in',reminder:'Скопировать напоминание',reminder_ok:'Напоминание скопировано',checkin_title:'Отметьтесь на месте',checkin_hint:'Введите email или телефон, указанные при записи.',checkin_found:'Регистрация найдена. Покажите экран координатору: он подтвердит участие и фактические часы.',checkin_fail:'Запись не найдена. Проверьте контакт.',report_present:'Пришло'},kz:{checked:'Қатысу',present:'Келді',checkin:'Белгілеу',qr:'Check-in QR',reminder:'Еске салуды көшіру',reminder_ok:'Еске салу көшірілді',checkin_title:'Қатысқаныңызды растаңыз',checkin_hint:'Тіркелу кезіндегі email не телефонды енгізіңіз.',checkin_found:'Тіркелу табылды. Экранды координаторға көрсетіңіз: ол қатысуды және нақты сағаттарды растайды.',checkin_fail:'Тіркелу табылмады.',report_present:'Келді'},en:{checked:'Attendance',present:'Present',checkin:'Check in',qr:'Check-in QR',reminder:'Copy reminder',reminder_ok:'Reminder copied',checkin_title:'Check in on site',checkin_hint:'Enter the email or phone used when registering.',checkin_found:'Registration found. Show this screen to the coordinator to confirm attendance and hours.',checkin_fail:'Registration not found.',report_present:'Present'}};return(copy[lang]||copy.ru)[key]||key;}
 function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function escAttr(s) { return esc(s).replace(/"/g, '\u0026quot;').replace(/'/g, '\u0026#39;'); }
 function fmtDate(d) { return new Date(d).toLocaleDateString(lang === 'kz' ? 'kk-KZ' : lang === 'en' ? 'en-GB' : 'ru-RU', {day:'numeric', month:'long', year:'numeric'}); }
@@ -467,27 +491,19 @@ function setLangStatic() {
     'lang-nav-events': 'events_title', 'lang-nav-passport': 'passport_title', 'lang-nav-impact': 'impact_title',
     'lang-hero-passport': 'passport_title', 'lang-about-title': 'about_title', 'lang-about-text': 'about_text',
     'lang-events-title': 'events_title', 'lang-how-title': 'how_title', 'lang-step1': 'step1',
-    'lang-step2': 'step2', 'lang-step3': 'step3', 'lang-coord-title': 'coordinator_title',
-    'tabLogin': 'login_tab', 'tabRegister': 'register_tab', 'lang-lbl-email': 'email_lbl',
-    'lang-lbl-password': 'password_lbl', 'lang-lbl-reg-email': 'reg_email_lbl',
-    'lang-lbl-reg-password': 'reg_password_lbl', 'lang-lbl-reg-password2': 'reg_password2_lbl',
-    'lang-btn-login': 'btn_login', 'lang-btn-register': 'btn_register', 'lang-reg-note': 'reg_note',
+    'lang-step2': 'step2', 'lang-step3': 'step3',
     'lang-add-title': 'add_title', 'lang-lbl-title': 'title_lbl', 'lang-lbl-city': 'city_lbl',
     'lang-lbl-date': 'date_lbl', 'lang-lbl-cat': 'category_lbl', 'lang-lbl-desc': 'desc_lbl',
     'lang-lbl-spots': 'spots_lbl', 'lang-btn-add': 'add_btn', 'lang-dash-btn': 'dash_btn',
-    'lang-fb-title': 'feedback_title', 'lang-lbl-name': 'name_lbl', 'lang-lbl-role': 'role_lbl',
-    'lang-lbl-rating': 'rating_lbl', 'lang-lbl-text': 'text_lbl', 'lang-btn-send': 'send_btn',
     'lang-footer': 'footer', 'lang-passport-title': 'passport_title', 'lang-passport-btn': 'passport_btn',
     'lang-top-title': 'top_title', 'lang-impact-title': 'impact_title', 'lang-sort-label': 'sort_label',
     'lang-date-label': 'date_label'
   };
   document.getElementById('lang-about-title').textContent = COMPANY.program;
   for (var id in map) { var el = document.getElementById(id); if (el && map[id]) el.textContent = T[lang][map[id]]; }
-  document.getElementById('fbRole').placeholder = T[lang].role_ph;
   document.getElementById('ppContact').placeholder = T[lang].passport_contact;
   document.getElementById('searchInput').placeholder = T[lang].search_ph;
   document.querySelectorAll('#evCategory option').forEach(function(o) { o.textContent = T[lang]['cat_' + o.value] || o.value; });
-  document.querySelectorAll('#fbRating option').forEach(function(o) { o.textContent = T[lang]['rating_' + o.value] || o.value; });
   // sort/date options
   var sortOpts = document.getElementById('sortSelect');
   var sorts = t('sort_options').split(',');
@@ -540,24 +556,9 @@ function renderImpact() {
     '<div class="impact-card"><b>' + cities + '</b><span>' + t('impact_cities') + '</span></div>';
 }
 
-function openAuth(tab) {
-  if (isCoord) {
-    var dashboard = document.getElementById('dashboard');
-    dashboard.classList.remove('hidden');
-    dashboard.scrollIntoView({behavior:'smooth', block:'start'});
-    return;
-  }
-  tab = tab || 'login';
-  showAuthTab(tab);
-  var dialog = document.getElementById('authDialog');
-  if (!dialog.open) dialog.showModal();
-  setTimeout(function() { document.getElementById(tab === 'register' ? 'coordRegEmail' : 'coordEmail').focus(); }, 30);
-}
-
 function isConfirmed(signup) { return !signup.status || signup.status === 'confirmed'; }
 function verifiedHours(signup) { return signup && signup.checked_in_at ? Number(signup.volunteer_hours || 0) : 0; }
 function formatHours(value) { var n = Number(value || 0); return Number.isInteger(n) ? String(n) : n.toFixed(1); }
-function closeAuth() { var dialog = document.getElementById('authDialog'); if (dialog && dialog.open) dialog.close(); }
 function renderListing(withFilters) { if (withFilters) renderFilters(); renderEvents(); }
 function setCity(i) { CITY = CITIES[i]; renderListing(true); }
 function setCategory(i) { CATEGORY = CATEGORIES[i]; renderListing(true); }
@@ -595,8 +596,9 @@ function inDateFilter(d) {
 function renderEvents() {
   var sorted = EVENTS.slice().sort(function(a, b) {
     var fa = a.date < today, fb = b.date < today;
-    if (SORT === 'popular') return b.signups.length - a.signups.length;
-    if (SORT === 'spots') return (b.spots - b.signups.length) - (a.spots - a.signups.length);
+    var ca = a.signups.filter(isConfirmed).length, cb = b.signups.filter(isConfirmed).length;
+    if (SORT === 'popular') return cb - ca;
+    if (SORT === 'spots') return (b.spots - cb) - (a.spots - ca);
     if (fa !== fb) return fa ? 1 : -1;
     return fa ? (b.date > a.date ? 1 : -1) : (a.date > b.date ? 1 : -1);
   });
@@ -681,15 +683,14 @@ function renderDash() {
       return '<tr><td><b>' + esc(s.name) + '</b><small class="coord-person-meta">' + esc(s.contact) + '</small></td><td><label class="hours-control"><input id="hours-' + s.id + '" type="number" min="0.5" max="24" step="0.5" value="' + hours + '"><span>ч</span></label></td><td><div class="row-actions"><button class="btn btn-small" onclick="checkInSignup(' + e.id + ',' + s.id + ')">' + (done ? 'Обновить часы' : 'Подтвердить') + '</button>' + (!done ? '<button class="btn btn-outline btn-small" onclick="markNoShow(' + e.id + ',' + s.id + ')">No-show</button>' : '') + cert + '</div></td></tr>';
     }).join('');
     var waitRows = eventWait.map(function(s){return '<li><span><b>'+esc(s.name)+'</b><small>'+esc(s.contact)+'</small></span><button class="btn btn-outline btn-small" onclick="promoteWaitlist(' + e.id + ',' + s.id + ')">Дать место</button></li>';}).join('');
-    return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест · план ' + formatHours(e.default_hours || 3) + ' ч</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (rows ? '<div class="coord-table-wrap"><table class="attendance-table"><tr><th>Участник</th><th>Часы</th><th>Attendance</th></tr>' + rows + '</table></div>' : '<p>Пока нет подтверждённых участников.</p>') + (waitRows ? '<div class="waitlist-block"><h4>Резерв — следующий автоматически получает место при no-show</h4><ul>' + waitRows + '</ul></div>' : '') + (eventNoShow.length ? '<p class="no-show-note">No-show: ' + eventNoShow.length + '</p>' : '') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyRecruitmentLink(' + e.id + ')">' + t('recruit_link') + '</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button><button class="btn btn-outline btn-small" onclick="startEdit(' + e.id + ')">Изменить</button></div></article>';
+    return '<article class="coord-event"><div class="coord-event-head"><div><h3>' + esc(e.title) + '</h3><p>' + esc(e.city) + ' · ' + fmtDate(e.date) + ' · ' + eventConfirmed.length + '/' + e.spots + ' мест · план ' + formatHours(e.default_hours || 3) + ' ч</p></div><span class="coord-status' + (eventWait.length ? ' wait' : '') + '">' + (eventWait.length ? eventWait.length + ' в резерве' : eventFill + '% заполнено') + '</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + Math.min(100,eventFill) + '%"></div></div>' + (rows ? '<div class="coord-table-wrap"><table class="attendance-table"><tr><th>Участник</th><th>Часы</th><th>Attendance</th></tr>' + rows + '</table></div>' : '<p>Пока нет подтверждённых участников.</p>') + (waitRows ? '<div class="waitlist-block"><h4>Резерв — следующий автоматически получает место при no-show</h4><ul>' + waitRows + '</ul></div>' : '') + (eventNoShow.length ? '<p class="no-show-note">No-show: ' + eventNoShow.length + '</p>' : '') + '<div class="coord-event-actions"><button class="btn btn-small" onclick="showCheckinQR(' + e.id + ')">QR для check-in</button><button class="btn btn-outline btn-small" onclick="copyRecruitmentLink(' + e.id + ')">' + t('recruit_link') + '</button><button class="btn btn-outline btn-small" onclick="copyReminder(' + e.id + ')">Напоминание</button><button class="btn btn-outline btn-small" onclick="downloadCSV(' + e.id + ')">CSV</button><button class="btn btn-outline btn-small" onclick="startEdit(' + e.id + ')">Изменить</button><button class="btn btn-outline btn-small" onclick="duplicateEvent(' + e.id + ')">' + t('dup_btn') + '</button><button class="btn btn-outline btn-small btn-danger" onclick="deleteEvent(' + e.id + ')" aria-label="Удалить событие" title="Удалить событие">' + uiIcon('trash') + '</button></div></article>';
   }).join('') + '</div></div>';
   dash.innerHTML = html;
 }
 
-function renderPassport() { /* on lookup */ }
 function renderTop() {
   var map = {};
-  EVENTS.forEach(function(e) { e.signups.forEach(function(s) { var n = s.name.trim(); map[n] = (map[n] || 0) + 1; }); });
+  EVENTS.forEach(function(e) { e.signups.filter(isConfirmed).forEach(function(s) { var n = s.name.trim(); map[n] = (map[n] || 0) + 1; }); });
   var sorted = Object.keys(map).map(function(n) { return [n, map[n]]; }).sort(function(a, b) { return b[1] - a[1]; });
   var html = '';
   if (!sorted.length) {
@@ -740,8 +741,8 @@ async function promoteWaitlist(eventId,signupId){
 function showCheckinQR(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var url=location.origin+location.pathname+'?checkin='+eventId,img=document.getElementById('qrImage');document.getElementById('qrTitle').textContent=ci('qr')+': '+ev.title;img.hidden=false;img.onerror=function(){img.hidden=true;};img.src='https://api.qrserver.com/v1/create-qr-code/?size=280x280&data='+encodeURIComponent(url);document.getElementById('qrLink').textContent=url;document.getElementById('qrLink').href=url;document.getElementById('qrDialog').showModal();}
 function closeQR(){document.getElementById('qrDialog').close();}
 function copyReminder(eventId){var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;var text='Напоминание: «'+ev.title+'» — '+fmtDate(ev.date)+', '+ev.city+'. Пожалуйста, подтвердите участие и отметьтесь на площадке через QR-код.';navigator.clipboard.writeText(text).then(function(){alert(ci('reminder_ok'));});}
-function renderCheckinGate(){var eventId=Number(new URLSearchParams(location.search).get('checkin')),gate=document.getElementById('checkinGate');if(!eventId||!gate)return;var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;gate.classList.remove('hidden');gate.innerHTML='<div class="checkin-gate"><div><p class="checkin-kicker">'+ci('checkin_title')+'</p><h2>'+esc(ev.title)+'</h2><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p></div><div class="checkin-form"><label>'+ci('checkin_hint')+'</label><input id="checkinContact" type="text" placeholder="Email или телефон"><button class="btn" onclick="selfCheckIn('+ev.id+')">'+ci('checkin')+'</button><div id="checkinMsg"></div></div></div>';}
-async function selfCheckIn(eventId){var contact=(document.getElementById('checkinContact').value||'').trim().toLowerCase(),ev=EVENTS.find(function(e){return e.id===eventId;}),signup=ev&&ev.signups.find(function(s){return String(s.contact).trim().toLowerCase()===contact&&isConfirmed(s);}),msg=document.getElementById('checkinMsg');if(!signup){msg.textContent=ci('checkin_fail');msg.className='msg msg-err';return;}msg.textContent='Регистрация найдена. Покажите экран координатору: он подтвердит attendance и фактические часы.';msg.className='msg msg-ok';}
+function renderCheckinGate(){var eventId=Number(new URLSearchParams(location.search).get('checkin')),gate=document.getElementById('checkinGate');if(!eventId||!gate)return;var ev=EVENTS.find(function(e){return e.id===eventId;});if(!ev)return;gate.classList.remove('hidden');gate.innerHTML='<div class="checkin-gate"><div><p class="checkin-kicker">'+ci('checkin_title')+'</p><h2>'+esc(ev.title)+'</h2><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p></div><div class="checkin-form"><label for="checkinContact">'+ci('checkin_hint')+'</label><input id="checkinContact" type="text" placeholder="'+escAttr(t('email_phone'))+'"><button class="btn" onclick="selfCheckIn('+ev.id+')">'+ci('checkin')+'</button><div id="checkinMsg"></div></div></div>';}
+async function selfCheckIn(eventId){var contact=(document.getElementById('checkinContact').value||'').trim().toLowerCase(),ev=EVENTS.find(function(e){return e.id===eventId;}),signup=ev&&ev.signups.find(function(s){return String(s.contact).trim().toLowerCase()===contact&&isConfirmed(s);}),msg=document.getElementById('checkinMsg');if(!signup){msg.textContent=ci('checkin_fail');msg.className='msg msg-err';return;}msg.textContent=ci('checkin_found');msg.className='msg msg-ok';}
 
 async function doSignup(id, submitEvent) {
   if (submitEvent) submitEvent.preventDefault();
@@ -768,70 +769,12 @@ async function doSignup(id, submitEvent) {
   finally { setElementDisabled(btn, false); }
 }
 
-function showAuthTab(tab) {
-  document.getElementById('loginForm').classList.toggle('active', tab === 'login');
-  document.getElementById('registerForm').classList.toggle('active', tab === 'register');
-  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
-}
-
 async function checkApproved(email) {
   try {
     var resp = await supabase.from('coordinator_requests').select('approved').eq('email', email).maybeSingle();
     if (resp.error) { return false; }
     return resp.data && resp.data.approved;
   } catch (err) { return false; }
-}
-
-async function loginCoord(e) {
-  e.preventDefault();
-  var form = e.target;
-  var btn = form.querySelector('button[type="submit"]');
-  setElementDisabled(btn, true);
-  try {
-    var email = document.getElementById('coordEmail').value.trim();
-    var password = document.getElementById('coordPassword').value;
-    var resp = await supabase.auth.signInWithPassword({ email: email, password: password });
-    if (resp.error) { showMsg('loginMsg', t('invalid_auth'), true); return; }
-    var approved = await checkApproved(email);
-    if (!approved) { showMsg('loginMsg', t('no_approved'), true); await supabase.auth.signOut(); return; }
-    user = resp.data.user;
-    coordEmail = email;
-    sessionStorage.setItem('coordEmail', email);
-    isCoord = true;
-    showMsg('loginMsg', '', false);
-    closeAuth();
-    document.getElementById('addEventSection').classList.remove('hidden');
-    render();
-    document.getElementById('dashboard').classList.remove('hidden');
-    document.getElementById('dashboard').scrollIntoView({behavior:'smooth', block:'start'});
-  } catch (err) { netMsg('loginMsg'); }
-  finally { setElementDisabled(btn, false); }
-}
-
-async function registerCoord(e) {
-  e.preventDefault();
-  var form = e.target;
-  var btn = form.querySelector('button[type="submit"]');
-  setElementDisabled(btn, true);
-  try {
-    var email = document.getElementById('coordRegEmail').value.trim();
-    var password = document.getElementById('coordRegPassword').value;
-    var password2 = document.getElementById('coordRegPassword2').value;
-    if (password !== password2) { showMsg('registerMsg', t('password_match'), true); return; }
-    var resp = await supabase.auth.signUp({ email: email, password: password });
-    if (resp.error) {
-      if (resp.error.message && resp.error.message.toLowerCase().indexOf('already') !== -1) showMsg('registerMsg', t('email_exists'), true);
-      else showMsg('registerMsg', resp.error.message, true);
-      return;
-    }
-    // insert request
-    var req = await supabase.from('coordinator_requests').insert({ email: email, approved: false });
-    if (req.error) { showMsg('registerMsg', req.error.message, true); return; }
-    showMsg('registerMsg', t('register_ok'), false);
-    form.reset();
-  } catch (err) { netMsg('registerMsg'); }
-  finally { setElementDisabled(btn, false); }
 }
 
 async function logoutCoord() {
@@ -841,7 +784,6 @@ async function logoutCoord() {
   sessionStorage.removeItem('coordEmail');
   isCoord = false;
   document.getElementById('addEventSection').classList.add('hidden');
-  closeAuth();
   render();
 }
 
@@ -921,26 +863,11 @@ async function duplicateEvent(id) {
   var newDate = prompt(t('dup_prompt'), defaultDate);
   if (!newDate) return;
   try {
-    var copy = { title: ev.title, city: ev.city, date: newDate, category: ev.category, description: ev.description, spots: ev.spots };
+    var copy = { title: ev.title, city: ev.city, date: newDate, category: ev.category, description: ev.description, spots: ev.spots, default_hours: ev.default_hours || 3 };
     var resp = await supabase.from('events').insert(copy);
     if (resp.error) { alert(resp.error.message); return; }
     loadEvents();
   } catch (err) { alert(t('net_err')); }
-}
-
-async function sendFeedback(e) {
-  e.preventDefault();
-  var form = e.target;
-  var btn = form.querySelector('button[type="submit"]');
-  setElementDisabled(btn, true);
-  try {
-    var fb = { name: document.getElementById('fbName').value.trim(), role: document.getElementById('fbRole').value.trim(), rating: parseInt(document.getElementById('fbRating').value), text: document.getElementById('fbText').value.trim() };
-    var resp = await supabase.from('feedback').insert(fb);
-    if (resp.error) { showMsg('fbMsg', resp.error.message, true); return; }
-    showMsg('fbMsg', t('feedback_ok'), false);
-    form.reset();
-  } catch (err) { netMsg('fbMsg'); }
-  finally { setElementDisabled(btn, false); }
 }
 
 async function lookupPassport(e) {
@@ -965,12 +892,12 @@ async function lookupPassport(e) {
       var levelKey = level === 1 ? 'level_1' : level === 2 ? 'level_2' : 'level_3';
       var levelIcon = level === 1 ? 'leaf' : level === 2 ? 'users' : 'award';
       var next = level === 1 ? 3 - completed.length : level === 2 ? 5 - completed.length : 0;
-      html += '<div class="card level-card"><div class="level-icon">' + uiIcon(levelIcon) + '</div><h3>' + t(levelKey) + '</h3><p><b>' + completed.length + '</b> подтверждённых событий · <b>' + formatHours(hours) + '</b> ' + t('passport_hours') + '</p>';
+      html += '<div class="card level-card"><div class="level-icon">' + uiIcon(levelIcon) + '</div><h3>' + t(levelKey) + '</h3><p><b>' + completed.length + '</b> ' + t('pp_confirmed') + ' · <b>' + formatHours(hours) + '</b> ' + t('passport_hours') + '</p>';
       if (next > 0) html += '<div class="progress"><div class="progress-fill" style="width:' + (completed.length/(completed.length+next)*100) + '%"></div></div><p class="next">' + t('next_level').replace('N', next) + '</p>';
       html += '</div>';
       html += mine.map(function(x) {
-        var eventItem=x.event,signup=x.signup,done=!!signup.checked_in_at,status=signup.status==='waitlist'?'Резерв':signup.status==='no_show'?'No-show':done?'Участие подтверждено · '+formatHours(verifiedHours(signup))+' ч':'Регистрация подтверждена';
-        var certificate=done&&signup.certificate_code?'<a class="btn btn-cert" href="'+escAttr(certificateUrl(signup.certificate_code))+'" target="_blank">'+uiIcon('award')+' '+t('cert_btn')+'</a>':'<span class="certificate-pending">Сертификат после attendance</span>';
+        var eventItem=x.event,signup=x.signup,done=!!signup.checked_in_at,status=signup.status==='waitlist'?t('status_waitlist'):signup.status==='no_show'?t('status_no_show'):done?t('status_attended')+' · '+formatHours(verifiedHours(signup))+' '+t('h'):t('status_registered');
+        var certificate=done&&signup.certificate_code?'<a class="btn btn-cert" href="'+escAttr(certificateUrl(signup.certificate_code))+'" target="_blank">'+uiIcon('award')+' '+t('cert_btn')+'</a>':'<span class="certificate-pending">'+t('cert_pending')+'</span>';
         return '<div class="card"><h3>' + esc(eventItem.title) + '</h3><p class="meta">' + esc(eventItem.city) + ' \u00b7 ' + fmtDate(eventItem.date) + '</p><p class="passport-status">'+esc(status)+'</p>' +
           '<div class="actions">' + certificate +
             (!done&&signup.status!=='no_show'?'<button class="btn btn-outline" data-id="' + eventItem.id + '" data-contact="' + escAttr(signup.contact) + '" onclick="cancelSignup(this.dataset.id, this.dataset.contact)">' + t('cancel_btn') + '</button>':'') +
@@ -986,8 +913,9 @@ async function cancelSignup(id, contact) {
   if (!confirm(t('cancel_btn') + '?')) return;
   var eventId = parseInt(id);
   try {
-    var resp = await supabase.from('signups').delete().match({event_id: eventId, contact: contact});
-    if (resp.error) { alert('Отмена недоступна: ' + resp.error.message); return; }
+    var resp = await supabase.from('signups').delete().match({event_id: eventId, contact: contact}).select('id');
+    // RLS without a delete policy returns no error and 0 rows — treat that as "unavailable" instead of silently reloading
+    if (resp.error || !resp.data || !resp.data.length) { alert(t('cancel_unavail') + (resp.error ? ' (' + resp.error.message + ')' : '')); return; }
     document.getElementById('ppContact').value = contact;
     await loadEvents();
     lookupPassport(null);
@@ -1024,7 +952,11 @@ function downloadICS(id) {
   var ev = EVENTS.find(function(e) { return e.id === id; });
   if (!ev) return;
   var date = ev.date.replace(/-/g, '');
-  var ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Volunteer Hub//EN\nBEGIN:VEVENT\nUID:' + id + '@volunteerhub\nDTSTART;VALUE=DATE:' + date + '\nSUMMARY:' + ev.title + '\nLOCATION:' + ev.city + '\nDESCRIPTION:' + ev.description + '\nEND:VEVENT\nEND:VCALENDAR';
+  var icsEsc = function(s) { return String(s).replace(/\\/g, '\\\\').replace(/[,;]/g, '\\$&').replace(/\r?\n/g, '\\n'); };
+  var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Volunteer Hub//EN', 'BEGIN:VEVENT',
+    'UID:' + id + '@volunteerhub', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]|\.\d+/g, ''),
+    'DTSTART;VALUE=DATE:' + date, 'SUMMARY:' + icsEsc(ev.title), 'LOCATION:' + icsEsc(ev.city), 'DESCRIPTION:' + icsEsc(ev.description),
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
   var blob = new Blob([ics], {type: 'text/calendar'});
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'event-' + id + '.ics'; a.click();
 }
@@ -1034,18 +966,6 @@ function downloadCSV(id) {
   var csv = '\uFEFFName,Contact,Status,Checked in,Volunteer hours,Certificate\r\n' + ev.signups.map(function(s) { return [s.name,s.contact,s.status||'confirmed',s.checked_in_at||'',verifiedHours(s)||'',s.certificate_code||''].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(','); }).join('\r\n');
   var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (ev.title || 'event') + '.csv'; a.click();
-}
-function copyList(eventId) {
-  var ev = EVENTS.find(function(e) { return e.id === eventId; });
-  if (!ev) return;
-  var lines = [ev.title, ''];
-  ev.signups.forEach(function(s) { lines.push(s.name + ' — ' + s.contact); });
-  navigator.clipboard.writeText(lines.join('\n')).then(function() { alert(t('copied')); });
-}
-function copyAllContacts() {
-  var contacts = [];
-  EVENTS.forEach(function(e) { e.signups.forEach(function(s) { if (contacts.indexOf(s.contact) === -1) contacts.push(s.contact); }); });
-  navigator.clipboard.writeText(contacts.join(', ')).then(function() { alert(t('copied') + ' (' + contacts.length + ')'); });
 }
 function copyReport() {
   var totalSigned = EVENTS.reduce(function(s, e) { return s + e.signups.filter(isConfirmed).length; }, 0);
@@ -1063,36 +983,6 @@ function copyReport() {
   lines.push('', '**' + t('impact_events') + ':** ' + EVENTS.length + ' · **Регистрации:** ' + totalSigned + ' · **Подтверждено attendance:** ' + checked.length + ' · **' + t('passport_hours') + ':** ' + formatHours(totalHours) + ' · **' + t('fill_rate') + ':** ' + avgFill + '%');
   navigator.clipboard.writeText(lines.join('\n')).then(function() { alert(t('copied')); });
 }
-function genCert(id, name) {
-  var eventId = parseInt(id);
-  var ev = EVENTS.find(function(e) { return e.id === eventId; });
-  if (!ev) return;
-  var c = document.createElement('canvas');
-  c.width = 900; c.height = 640;
-  var ctx = c.getContext('2d');
-  var grd = ctx.createLinearGradient(0, 0, 900, 640);
-  grd.addColorStop(0, '#e8f5e9');
-  grd.addColorStop(1, '#b7e4c7');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, 900, 640);
-  ctx.globalAlpha = 0.08; ctx.strokeStyle = COMPANY.color; ctx.lineWidth = 2;
-  for (var i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(100 + i * 180, 180 + i * 90, 44, 0, Math.PI * 2); ctx.stroke(); }
-  ctx.globalAlpha = 1;
-  ctx.lineWidth = 12; ctx.strokeStyle = COMPANY.color; ctx.strokeRect(24, 24, 852, 592);
-  ctx.lineWidth = 4; ctx.strokeStyle = '#74c69d'; ctx.strokeRect(36, 36, 828, 568);
-  ctx.textAlign = 'center'; ctx.fillStyle = COMPANY.color; ctx.beginPath(); ctx.arc(450, 95, 24, 0, Math.PI * 2); ctx.fill();
-  ctx.font = 'bold 48px system-ui'; ctx.fillText(t('cert_title'), 450, 170);
-  ctx.font = '22px system-ui'; ctx.fillText(t('cert_name'), 450, 230);
-  ctx.font = 'bold 56px system-ui'; ctx.fillStyle = '#1b4332'; ctx.fillText(name, 450, 310);
-  ctx.font = '26px system-ui'; ctx.fillStyle = COMPANY.color;
-  ctx.fillText(t('cert_for') + ' ' + t('cert_event'), 450, 370);
-  ctx.font = 'italic 32px system-ui'; ctx.fillText('«' + ev.title + '»', 450, 420);
-  ctx.font = '20px system-ui'; ctx.fillText(ev.city + ', ' + fmtDate(ev.date), 450, 470);
-  ctx.font = '16px system-ui'; ctx.fillStyle = '#555'; ctx.fillText(COMPANY.program, 450, 540);
-  ctx.font = '16px system-ui'; ctx.fillText('____________________', 450, 580); ctx.fillText('Coordinator', 450, 600);
-  var a = document.createElement('a'); a.href = c.toDataURL(); a.download = 'certificate.png'; a.click();
-}
-
 function certificateUrl(code){return location.origin+location.pathname+'?certificate='+encodeURIComponent(code);}
 async function issueCertificate(signup){if(signup.certificate_code)return signup.certificate_code;var code=crypto.randomUUID().replace(/-/g,'').slice(0,16).toUpperCase();var resp=await supabase.from('signups').update({certificate_code:code,certificate_issued_at:new Date().toISOString()}).eq('id',signup.id);if(resp.error)return null;signup.certificate_code=code;return code;}
 async function renderCertificateVerification(){var code=new URLSearchParams(location.search).get('certificate'),view=document.getElementById('certificateView');if(!code||!view)return;view.classList.remove('hidden');view.innerHTML='<div class="certificate-shell"><p class="certificate-eyebrow">Volunteer Hub · Verified impact record</p><h1>Проверяем сертификат…</h1></div>';var resp=await supabase.from('signups').select('id,name,event_id,certificate_code,checked_in_at,volunteer_hours').eq('certificate_code',code).maybeSingle();if(resp.error||!resp.data||!resp.data.checked_in_at){view.innerHTML='<div class="certificate-shell certificate-invalid"><h1>Сертификат не найден</h1><p>Проверьте ссылку или обратитесь к координатору.</p></div>';return;}var signup=resp.data,ev=EVENTS.find(function(e){return e.id===signup.event_id;});if(!ev){view.innerHTML='<div class="certificate-shell certificate-invalid"><h1>Сертификат не найден</h1></div>';return;}view.innerHTML='<div class="certificate-shell"><p class="certificate-eyebrow">Volunteer Hub · Verified impact record</p><div class="certificate-stamp">ПРОВЕРЕНО</div><h1>Сертификат волонтёра</h1><p class="certificate-lead">Подтверждаем участие</p><h2>'+esc(signup.name)+'</h2><p class="certificate-event">в волонтёрском событии «'+esc(ev.title)+'»</p><p>'+esc(ev.city)+' · '+fmtDate(ev.date)+'</p><div class="certificate-hours"><b>'+formatHours(signup.volunteer_hours)+'</b><span>подтверждённых волонтёрских часов</span></div><div class="certificate-code">№ '+esc(signup.certificate_code)+'</div><p class="certificate-note">Участие и часы подтверждены координатором после check-in. Ссылка и код подходят для независимой проверки.</p><div class="actions certificate-actions"><button class="btn" onclick="window.print()">Печать / сохранить PDF</button><button class="btn btn-outline" onclick="navigator.clipboard.writeText(location.href)">Скопировать ссылку</button></div></div>';}
@@ -1128,6 +1018,7 @@ async function loadEvents() {
     var shouldHandleJoin = !!joinId && !deepLinkHandled && EVENTS.some(function(e) { return e.id === joinId; });
     if (shouldHandleJoin) { CITY = 'all'; CATEGORY = 'all'; DATE_FILTER = 'all'; SEARCH = ''; }
     render();
+    renderCheckinGate();
     if (shouldHandleJoin || (location.hash && !joinId)) {
       if (shouldHandleJoin) deepLinkHandled = true;
       setTimeout(function() {
@@ -1179,6 +1070,7 @@ function init() {
   setLangStatic();
   initAuth().then(function() {
     var loading = loadEvents();
+    loading.then(renderCertificateVerification);
     if (isCoord) {
       document.getElementById('addEventSection').classList.remove('hidden');
       if (new URLSearchParams(location.search).get('coordinator') === '1') loading.then(function() {
